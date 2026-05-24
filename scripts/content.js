@@ -1,154 +1,154 @@
 function extractHeadings() {
-  const headings = document.querySelectorAll('h1, h2');
+    const headings = document.querySelectorAll('h1, h2');
 
-  const headingData = [];
+    const headingData = [];
 
-  headings.forEach((heading, index) => {
-    const text = heading.textContent.trim();
+    headings.forEach((heading, index) => {
+        const text = heading.textContent.trim();
 
-    if (!text) return;
+        if (!text) return;
 
-    headingData.push({
-      id: index + 1,
-      type: "heading",
-      level: heading.tagName,
-      text: text,
-      element: heading
+        headingData.push({
+            id: index + 1,
+            type: "heading",
+            level: heading.tagName,
+            text: text,
+            element: heading
+        });
     });
-  });
 
-  return headingData;
+    return headingData;
 }
 
 function extractLists() {
-  const lists = document.querySelectorAll('ul, ol');
+    const lists = document.querySelectorAll('ul, ol');
 
-  const listData = [];
+    const listData = [];
 
-  lists.forEach((list, index) => {
+    lists.forEach((list, index) => {
 
-    const items = [];
+        const items = [];
 
-    list.querySelectorAll('li').forEach((item) => {
+        list.querySelectorAll('li').forEach((item) => {
 
-      const text = item.textContent.trim();
+            const text = item.textContent.trim();
 
-      if (text) {
-        items.push(text);
-      }
+            if (text) {
+                items.push(text);
+            }
+        });
+
+        if (items.length === 0) return;
+
+        listData.push({
+            id: index + 1,
+            type: "list",
+            listType: list.tagName,
+            items: items,
+            element: list
+        });
     });
 
-    if (items.length === 0) return;
-
-    listData.push({
-      id: index + 1,
-      type: "list",
-      listType: list.tagName,
-      items: items,
-      element: list
-    });
-  });
-
-  return listData;
+    return listData;
 }
 
 function extractParagraphs() {
-  const paragraphs = document.querySelectorAll('p');
+    const paragraphs = document.querySelectorAll('p');
 
-  const paragraphData = [];
+    const paragraphData = [];
 
-  paragraphs.forEach((paragraph, index) => {
+    paragraphs.forEach((paragraph, index) => {
 
-    const text = paragraph.textContent.trim();
+        const text = paragraph.textContent.trim();
 
-    if (!text) return;
+        if (!text) return;
 
-    paragraphData.push({
-      id: index + 1,
-      type: "paragraph",
-      text: text,
-      element: paragraph
+        paragraphData.push({
+            id: index + 1,
+            type: "paragraph",
+            text: text,
+            element: paragraph
+        });
     });
-  });
 
-  return paragraphData;
+    return paragraphData;
 }
 
 function extractCodeBlocks() {
 
-  const selectors = [
-    // Generic HTML code blocks
-    'pre',
-    'code',
+    const selectors = [
+        // Generic HTML code blocks
+        'pre',
+        'code',
 
-    // Generic class patterns
-    '[class*="code"]',
-    '[class*="highlight"]',
-    '[class*="language"]',
-    '[class*="source"]',
+        // Generic class patterns
+        '[class*="code"]',
+        '[class*="highlight"]',
+        '[class*="language"]',
+        '[class*="source"]',
 
-    // MDN
-    'mdn-code-example',
+        // MDN
+        'mdn-code-example',
 
-    // GitHub markdown/code highlighting
-    '.highlight',
-    '.highlight-source-js',
-    '.highlight-source-ts',
-    '.highlight-source-python',
-    '.highlight-source-shell',
+        // GitHub markdown/code highlighting
+        '.highlight',
+        '.highlight-source-js',
+        '.highlight-source-ts',
+        '.highlight-source-python',
+        '.highlight-source-shell',
 
-    // Prism.js / syntax highlighters
-    '.language-js',
-    '.language-javascript',
-    '.language-ts',
-    '.language-python',
+        // Prism.js / syntax highlighters
+        '.language-js',
+        '.language-javascript',
+        '.language-ts',
+        '.language-python',
 
-    // Common docs wrappers
-    '.code-example',
-    '.codeBlock',
-    '.code-block'
-  ];
+        // Common docs wrappers
+        '.code-example',
+        '.codeBlock',
+        '.code-block'
+    ];
 
-  const codeElements = document.querySelectorAll(selectors.join(','));
+    const codeElements = document.querySelectorAll(selectors.join(','));
 
-  const seen = new Set();
+    const seen = new Set();
 
-  const codeData = [];
+    const codeData = [];
 
-  codeElements.forEach((block, index) => {
+    codeElements.forEach((block, index) => {
 
-    const text = block.textContent.trim();
+        const text = block.textContent.trim();
 
-    if (!text) return;
+        if (!text) return;
 
-    if (seen.has(text)) return;
+        if (seen.has(text)) return;
 
-    seen.add(text);
+        seen.add(text);
 
-    codeData.push({
-      id: index + 1,
-      type: "code",
-      text: text,
-      element: block
+        codeData.push({
+            id: index + 1,
+            type: "code",
+            text: text,
+            element: block
+        });
     });
-  });
 
-  return codeData;
+    return codeData;
 }
 
 function extractPageData() {
 
-  const pageData = {
-    url: window.location.href,
-    title: document.title,
+    const pageData = {
+        url: window.location.href,
+        title: document.title,
 
-    headings: extractHeadings(),
-    lists: extractLists(),
-    paragraphs: extractParagraphs(),
-    codeBlocks: extractCodeBlocks()
-  };
+        headings: extractHeadings(),
+        lists: extractLists(),
+        paragraphs: extractParagraphs(),
+        codeBlocks: extractCodeBlocks()
+    };
 
-  return pageData;
+    return pageData;
 }
 
 // ==============================
@@ -205,78 +205,252 @@ function getArticleRoot() {
 
 }
 
+function extractSections(root) {
+
+    const sections = [];
 
 
-// ==============================
-// EXTRACT HEADINGS
-// ==============================
-
-function extractHeadings(root) {
 
     const headings = root.querySelectorAll('h1, h2, h3');
 
-    const headingData = [];
+
 
     headings.forEach((heading, index) => {
 
-        const text = heading.textContent.trim();
+        const section = {
 
-        // ignore empty headings
-        if (!text) return;
-
-        headingData.push({
             id: index,
-            text: text,
+
+            heading: heading.textContent.trim(),
+
             level: heading.tagName,
+
+            content: [],
+
+            codeBlocks: [],
+
             element: heading
-        });
+
+        };
+
+
+
+        let currentElement = heading.nextElementSibling;
+
+
+
+        while (currentElement) {
+
+            // STOP when next heading appears
+            if (
+                ['H1', 'H2', 'H3'].includes(currentElement.tagName)
+            ) {
+                break;
+            }
+
+
+
+            // =========================
+            // TEXT CONTENT
+            // =========================
+
+            const text = currentElement.textContent.trim();
+
+            if (text) {
+
+                section.content.push(text);
+
+            }
+
+            currentElement = currentElement.nextElementSibling;
+
+        }
+
+
+
+        sections.push(section);
 
     });
 
-    return headingData;
+
+
+    return sections;
 
 }
 
-
-
-// ==============================
-// EXTRACT CODE BLOCKS
-// ==============================
 
 function extractCodeBlocks(root) {
 
-    const codeSelectors = [
-        'pre',
-        'pre code',
-        '.highlight',
-        '.highlight-source-js',
-        '.mdn-code-example',
-        'code[class*="language-"]'
-    ];
+    const codeBlocks = [];
 
-    const codeBlocks = root.querySelectorAll(codeSelectors.join(','));
+    const seen = new Set();
 
-    const codeData = [];
 
-    codeBlocks.forEach((block, index) => {
 
-        const text = block.textContent.trim();
+    // =========================
+    // MDN SHADOW DOM BLOCKS
+    // =========================
+
+    const mdnExamples =
+        document.querySelectorAll(
+            'mdn-code-example'
+        );
+
+
+
+    mdnExamples.forEach((example, index) => {
+
+        let text = '';
+
+
+
+        // access shadow DOM
+        if (example.shadowRoot) {
+
+            const shadowElement =
+
+                example.shadowRoot.querySelector(
+                    '*'
+                );
+
+
+
+            if (shadowElement) {
+
+                text =
+                    shadowElement.innerText.trim();
+
+            }
+
+        }
+
+
 
         if (!text) return;
 
-        codeData.push({
-            id: index,
+
+
+        if (seen.has(text)) return;
+
+        seen.add(text);
+
+
+
+        const lineCount =
+            text.split('\n').length;
+
+
+
+        const charCount =
+            text.length;
+
+
+
+        const isLargeEnough =
+
+            lineCount >= 2 ||
+
+            charCount >= 80;
+
+
+
+        if (!isLargeEnough) {
+
+            return;
+
+        }
+
+
+
+        codeBlocks.push({
+
+            id: `mdn-${index}`,
+
             text: text,
-            element: block
+
+            lineCount: lineCount,
+
+            charCount: charCount,
+
+            element: example
+
         });
 
     });
 
-    return codeData;
+
+
+    // =========================
+    // NORMAL PRE BLOCKS
+    // =========================
+
+    const preBlocks =
+        document.querySelectorAll('pre');
+
+
+
+    preBlocks.forEach((pre, index) => {
+
+        const text =
+            pre.innerText.trim();
+
+
+
+        if (!text) return;
+
+
+
+        if (seen.has(text)) return;
+
+        seen.add(text);
+
+
+
+        const lineCount =
+            text.split('\n').length;
+
+
+
+        const charCount =
+            text.length;
+
+
+
+        const isLargeEnough =
+
+            lineCount >= 2 ||
+
+            charCount >= 80;
+
+
+
+        if (!isLargeEnough) {
+
+            return;
+
+        }
+
+
+
+        codeBlocks.push({
+
+            id: `pre-${index}`,
+
+            text: text,
+
+            lineCount: lineCount,
+
+            charCount: charCount,
+
+            element: pre
+
+        });
+
+    });
+
+    return codeBlocks;
 
 }
-
-
 
 // ==============================
 // EXTRACT PAGE DATA
@@ -286,13 +460,17 @@ function extractPageData() {
 
     const root = getArticleRoot();
 
+
+
     if (!root) {
 
-        console.log('No article root found');
+        console.log('No root found');
 
         return null;
 
     }
+
+
 
     return {
 
@@ -300,15 +478,13 @@ function extractPageData() {
 
         title: document.title,
 
-        headings: extractHeadings(root),
+        sections: extractSections(root),
 
         codeBlocks: extractCodeBlocks(root)
 
     };
 
 }
-
-
 
 // ==============================
 // STYLE AI BUTTON
@@ -400,7 +576,7 @@ function createAssistantPopup(x, y, headingText) {
 
     popup.style.top = `${y + window.scrollY}px`;
 
-popup.style.left = `${x + window.scrollX}px`;
+    popup.style.left = `${x + window.scrollX}px`;
 
     popup.style.width = '260px';
 
@@ -528,11 +704,11 @@ popup.style.left = `${x + window.scrollX}px`;
 
 
 
-function injectHeadingButtons(headings) {
+function injectHeadingButtons(sections) {
 
-    headings.forEach((headingData) => {
+    sections.forEach((sectionData) => {
 
-        const headingElement = headingData.element;
+        const headingElement = sectionData.element;
 
 
 
@@ -575,7 +751,7 @@ function injectHeadingButtons(headings) {
 
                 rect.top + 4,
 
-                headingData.text
+                sectionData.heading
 
             );
 
@@ -617,6 +793,6 @@ console.log(extractedData);
 
 if (extractedData) {
 
-    injectHeadingButtons(extractedData.headings);
+    injectHeadingButtons(extractedData.sections);
 
 }
