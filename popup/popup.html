@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Docsense AI</title>
+
+    <style>
+
+        body {
+
+            width: 300px;
+
+            padding: 18px;
+
+            font-family: sans-serif;
+
+            background: #111827;
+
+            color: white;
+
+        }
+
+
+
+        h2 {
+
+            margin-top: 0;
+
+            font-size: 20px;
+
+        }
+
+
+
+        input {
+
+            width: 100%;
+
+            padding: 10px;
+
+            border-radius: 8px;
+
+            border: none;
+
+            margin-top: 10px;
+
+            outline: none;
+
+            background: #1f2937;
+
+            color: white;
+
+            box-sizing: border-box;
+
+        }
+
+
+
+        button {
+
+            width: 100%;
+
+            margin-top: 14px;
+
+            padding: 10px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #8b5cf6;
+
+            color: white;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+
+
+        .status {
+
+            margin-top: 12px;
+
+            opacity: 0.8;
+
+            font-size: 14px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <h2>Docsense AI</h2>
+
+
+
+    <input
+        type="password"
+        id="apiKeyInput"
+        placeholder="Enter Gemini API Key"
+    />
+
+
+
+    <button id="saveButton">
+
+        Save API Key
+
+    </button>
+
+    <button id="activateButton">
+
+    Activate Docsense
+
+</button>
+
+
+    <div
+        class="status"
+        id="statusText"
+    ></div>
+
+
+
+    <script src="popup.js"></script>
+
+</body>
+
+</html>
