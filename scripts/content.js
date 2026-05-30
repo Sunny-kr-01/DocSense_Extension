@@ -1,5 +1,8 @@
 console.log('CONTENT JS RUNNING');
 
+let selectionMode = false;
+let selectedText = '';
+
 if (window.docsenseInjected) {
     console.log('Docsense already active');
 } else {
@@ -1306,6 +1309,66 @@ function injectFloatingSearchButton() {
 
     document.body.appendChild(button);
 
+    const selectionButton =
+        document.createElement('div');
+
+    selectionButton.className =
+        'docsense-selection-toggle';
+
+    selectionButton.innerText =
+        'Selection OFF';
+
+    selectionButton.style.position =
+        'fixed';
+
+    selectionButton.style.bottom =
+        '20px';
+
+    selectionButton.style.right =
+        '20px';
+
+    selectionButton.style.zIndex =
+        '999999';
+
+    selectionButton.style.padding =
+        '10px 16px';
+
+    selectionButton.style.borderRadius =
+        '999px';
+
+    selectionButton.style.background =
+        '#22c55e';
+
+    selectionButton.style.color =
+        'white';
+
+    selectionButton.style.cursor =
+        'pointer';
+
+    selectionButton.style.fontFamily =
+        'sans-serif';
+
+    selectionButton.addEventListener(
+        'click',
+        (event) => {
+
+            event.stopPropagation();
+
+            selectionMode =
+                !selectionMode;
+
+            selectionButton.innerText =
+                selectionMode
+                    ? 'Selection ON'
+                    : 'Selection OFF';
+
+        }
+    );
+
+    document.body.appendChild(
+        selectionButton
+    );
+
     button.addEventListener(
         'mouseenter',
         () => {
@@ -1340,20 +1403,234 @@ function injectFloatingSearchButton() {
 
 }
 
+function initializeSelectionMode() {
 
-document.addEventListener('click', (event) => {
+    document.addEventListener(
+        'mouseup',
+        () => {
 
-    const popup = document.querySelector('.docsense-popup');
+            if (!selectionMode) {
+                return;
+            }
 
-    if (!popup) return;
+            const text =
+                window.getSelection()
+                    .toString()
+                    .trim();
 
-    if (!popup.contains(event.target)) {
+            if (!text) {
+                return;
+            }
 
-        popup.remove();
+            selectedText = text;
 
+            console.log(
+                'SELECTED:',
+                selectedText
+            );
+
+            const oldButton =
+                document.querySelector(
+                    '.docsense-selection-explain'
+                );
+
+            if (oldButton) {
+                oldButton.remove();
+            }
+
+            showSelectionExplainButton();
+
+        }
+    );
+
+}
+
+function showSelectionExplainButton() {
+
+    const oldButton =
+        document.querySelector(
+            '.docsense-selection-explain'
+        );
+
+    if (oldButton) {
+        oldButton.remove();
     }
 
-});
+    const selection =
+        window.getSelection();
+
+    if (!selection.rangeCount) {
+        return;
+    }
+
+    const rect =
+        selection
+            .getRangeAt(0)
+            .getBoundingClientRect();
+
+    const button =
+        document.createElement('div');
+
+    button.className =
+        'docsense-selection-explain';
+
+    button.innerText =
+        '✨ Explain';
+
+    button.style.position =
+        'fixed';
+
+    const left =
+        Math.min(
+            rect.right + 10,
+            window.innerWidth - 120
+        );
+
+    button.style.left =
+        `${left}px`;
+
+    button.style.top =
+        `${rect.top - 10}px`;
+
+    button.style.zIndex =
+        '999999';
+
+    button.style.padding =
+        '8px 12px';
+
+    button.style.borderRadius =
+        '999px';
+
+    button.style.background =
+        '#8b5cf6';
+
+    button.style.color =
+        'white';
+
+    button.style.cursor =
+        'pointer';
+
+    button.addEventListener(
+        'click',
+        async () => {
+
+            button.remove();
+
+            createAssistantPopup(
+                window.innerWidth - 450,
+                120,
+                'Selected Text'
+            );
+
+            const popup =
+                document.querySelector(
+                    '.docsense-popup'
+                );
+
+            const responseElement =
+                popup.querySelector(
+                    '.docsense-response'
+                );
+
+            responseElement.innerText =
+                'Thinking...';
+
+            try {
+
+                const aiResponse =
+                    await askAI(
+                        'Selected Text',
+                        selectedText
+                    );
+
+                console.log(
+                    'AI RESPONSE:',
+                    aiResponse
+                );
+
+                console.log(
+                    'RESPONSE ELEMENT:',
+                    responseElement
+                );
+
+                responseElement.innerText =
+                    aiResponse;
+
+            }
+
+            catch (error) {
+
+                console.error(error);
+
+                responseElement.innerText =
+                    'Failed to get AI response.';
+
+            }
+
+        }
+    );
+
+    document.body.appendChild(
+        button
+    );
+
+}
+
+document.addEventListener(
+    'mousedown',
+    (event) => {
+
+        const explainButton =
+            document.querySelector(
+                '.docsense-selection-explain'
+            );
+
+        if (!explainButton) {
+            return;
+        }
+
+        if (
+            !explainButton.contains(
+                event.target
+            )
+        ) {
+            explainButton.remove();
+        }
+
+    }
+);
+
+document.addEventListener(
+    'click',
+    (event) => {
+
+        const popup =
+            document.querySelector(
+                '.docsense-popup'
+            );
+
+        if (!popup) {
+            return;
+        }
+
+        if (
+            event.target.closest(
+                '.docsense-selection-explain'
+            )
+        ) {
+            return;
+        }
+
+        if (
+            !popup.contains(
+                event.target
+            )
+        ) {
+            popup.remove();
+        }
+
+    }
+);
 
 function initializeDocsense() {
 
@@ -1371,6 +1648,8 @@ function initializeDocsense() {
         injectCodeButtons(extractedData.codeBlocks);
 
         injectFloatingSearchButton();
+
+        initializeSelectionMode();
 
     }
 
