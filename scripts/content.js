@@ -1,4 +1,5 @@
 console.log('CONTENT JS RUNNING');
+console.log('MARKED:', marked);
 
 let selectionMode = false;
 let selectedText = '';
@@ -758,23 +759,24 @@ ${title}
 Documentation:
 ${content}
 
-Your response format:
+Response Format:
 
-What this is about
-
-Give a short paragraph explaining what this section is trying to teach or describe.
+Give a very short overview in 1-2 sentences describing what this section is about.
 
 Full Explanation
 
 Requirements:
 - Explain in beginner-friendly language.
-- Focus on understanding.
-- Use headings and bullet points.
-- Expand technical concepts when needed.
-- Use examples when useful.
-- Make the response easy to scan.
+- Focus on understanding rather than summarizing.
+- Keep the explanation concise.
+- Use headings and bullet points where useful.
+- Explain only the most important concepts.
+- Avoid long paragraphs.
 - Avoid giant walls of text.
-- Do not simply repeat the documentation.
+- Avoid unnecessary theory.
+- Do not repeat information.
+- Optimize for quick reading inside a popup.
+- The entire response should usually fit within 200-300 words.
 `;
 
 }
@@ -790,23 +792,39 @@ ${window.location.href}
 Code:
 ${code}
 
-Your response format:
+Response Format:
 
-Short Explanation
+Start with a very short explanation in 1-2 sentences describing what the code does.
 
-Give a quick overview of what the code does.
+Then provide:
 
-Full Explanation
+## Full Explanation
 
 Requirements:
-- Explain by logical chunks of code.
-- Follow the execution flow.
+- Break the code into logical parts.
+- Give each part a short title.
+- Explain what each part does.
+- Explain why each part exists.
+- Follow the execution flow of the code.
+- Group related lines together.
+- Explain important concepts only when they become relevant.
 - Do NOT explain every line individually.
-- Do NOT write a long theory essay.
-- Explain concepts where they become relevant.
-- Use headings and bullet points.
-- Make the explanation highly readable.
-- Focus on helping the reader understand the code.
+- Do NOT explain obvious statements unless they are important.
+- Do NOT write a theory-heavy essay.
+- Focus on helping the reader understand the actual code.
+
+Readability Requirements:
+- Use markdown headings.
+- Use bold text for important concepts.
+- Use bullet points.
+- Keep bullet points short.
+- Keep paragraphs short.
+- Avoid large walls of text.
+- Prioritize readability over completeness.
+- Explain the most important ideas first.
+- Avoid more than 5 bullet points in a section.
+
+The full explanation should usually fit within 250-350 words.
 `;
 
 }
@@ -822,22 +840,24 @@ ${window.location.href}
 Selected Content:
 ${text}
 
-Your response format:
+Response Format:
 
-What this is about
+Start with a short 1-2 sentence overview describing what the selected content is about.
 
-Give a short paragraph describing what the selected content is discussing.
+Then provide:
 
-Full Explanation
+## Full Explanation
 
 Requirements:
 - Explain in the clearest possible way.
 - Assume the reader is learning.
-- Use headings and bullet points.
+- Use markdown headings and bullet points.
 - Make the response highly readable.
 - Expand technical concepts when needed.
 - Use examples when useful.
 - Avoid giant walls of text.
+- Keep explanations concise.
+- Optimize for quick reading inside a popup.
 `;
 
 }
@@ -1183,14 +1203,16 @@ function injectHeadingButtons(sections) {
                     aiResponse
                 );
 
-                responseElement.innerText =
-                    typeof aiResponse === 'string'
-                        ? aiResponse
-                        : JSON.stringify(
-                            aiResponse,
-                            null,
-                            2
-                        );
+                responseElement.innerHTML =
+                    marked.parse(
+                        typeof aiResponse === 'string'
+                            ? aiResponse
+                            : JSON.stringify(
+                                aiResponse,
+                                null,
+                                2
+                            )
+                    );
 
             }
         );
@@ -1300,14 +1322,21 @@ function injectCodeButtons(codeBlocks) {
                 const aiResponse =
                     await askAI(prompt);
 
-                responseElement.innerText =
-                    typeof aiResponse === 'string'
-                        ? aiResponse
-                        : JSON.stringify(
-                            aiResponse,
-                            null,
-                            2
-                        );
+                console.log(
+                    'AI RESPONSE:',
+                    aiResponse
+                );
+
+                responseElement.innerHTML =
+                    marked.parse(
+                        typeof aiResponse === 'string'
+                            ? aiResponse
+                            : JSON.stringify(
+                                aiResponse,
+                                null,
+                                2
+                            )
+                    );
 
             }
         );
@@ -1639,8 +1668,10 @@ function showSelectionExplainButton() {
                     responseElement
                 );
 
-                responseElement.innerText =
-                    aiResponse;
+                responseElement.innerHTML =
+                    marked.parse(
+                        aiResponse
+                    );
 
             }
 
@@ -1648,8 +1679,10 @@ function showSelectionExplainButton() {
 
                 console.error(error);
 
-                responseElement.innerText =
-                    'Failed to get AI response.';
+                responseElement.innerHTML =
+                    renderAIResponse(
+                        'Failed to get AI response.'
+                    );
 
             }
 

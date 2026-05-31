@@ -101,6 +101,7 @@ activateButton.addEventListener(
 
             files: [
 
+                'libs/marked.min.js',
                 'scripts/content.js'
 
             ]
