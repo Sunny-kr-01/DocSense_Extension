@@ -744,7 +744,105 @@ function openSearchAssistant() {
 
 }
 
-async function askAI(contextTitle, contextText) {
+function buildDocumentationPrompt(title, content) {
+
+    return `
+You are Docsense AI, an expert documentation assistant.
+
+Current Page URL:
+${window.location.href}
+
+Section Title:
+${title}
+
+Documentation:
+${content}
+
+Your response format:
+
+What this is about
+
+Give a short paragraph explaining what this section is trying to teach or describe.
+
+Full Explanation
+
+Requirements:
+- Explain in beginner-friendly language.
+- Focus on understanding.
+- Use headings and bullet points.
+- Expand technical concepts when needed.
+- Use examples when useful.
+- Make the response easy to scan.
+- Avoid giant walls of text.
+- Do not simply repeat the documentation.
+`;
+
+}
+
+function buildCodePrompt(code) {
+
+    return `
+You are Docsense AI, an expert programming mentor.
+
+Current Page URL:
+${window.location.href}
+
+Code:
+${code}
+
+Your response format:
+
+Short Explanation
+
+Give a quick overview of what the code does.
+
+Full Explanation
+
+Requirements:
+- Explain by logical chunks of code.
+- Follow the execution flow.
+- Do NOT explain every line individually.
+- Do NOT write a long theory essay.
+- Explain concepts where they become relevant.
+- Use headings and bullet points.
+- Make the explanation highly readable.
+- Focus on helping the reader understand the code.
+`;
+
+}
+
+function buildSelectionPrompt(text) {
+
+    return `
+You are Docsense AI, an expert documentation assistant.
+
+Current Page URL:
+${window.location.href}
+
+Selected Content:
+${text}
+
+Your response format:
+
+What this is about
+
+Give a short paragraph describing what the selected content is discussing.
+
+Full Explanation
+
+Requirements:
+- Explain in the clearest possible way.
+- Assume the reader is learning.
+- Use headings and bullet points.
+- Make the response highly readable.
+- Expand technical concepts when needed.
+- Use examples when useful.
+- Avoid giant walls of text.
+`;
+
+}
+
+async function askAI(prompt) {
 
     return new Promise((resolve) => {
 
@@ -759,26 +857,7 @@ async function askAI(contextTitle, contextText) {
                     return;
                 }
 
-                const prompt = `
-You are Docsense AI, an assistant that helps developers understand technical documentation pages.
 
-Current page URL:
-${window.location.href}
-
-SECTION TITLE:
-${contextTitle}
-
-SECTION CONTENT:
-${contextText}
-
-First give a short 1-2 line explanation.
-Then under "Full Explanation" explain the concept in a more beginner-friendly and practical way.
-Keep the response concise because the popup has limited space.
-
-If the title is generic like "Overview" or "Description", then use the page URL and surrounding content to understand the actual documentation topic.
-
-Keep the explanation concise and practical.
-`;
 
                 chrome.runtime.sendMessage(
                     {
@@ -1090,11 +1169,14 @@ function injectHeadingButtons(sections) {
 
                 console.log('ASKING AI...');
 
-                const aiResponse =
-                    await askAI(
+                const prompt =
+                    buildDocumentationPrompt(
                         sectionData.heading,
                         combinedContent
                     );
+
+                const aiResponse =
+                    await askAI(prompt);
 
                 console.log(
                     'AI RESPONSE:',
@@ -1210,11 +1292,13 @@ function injectCodeButtons(codeBlocks) {
                     id: codeData.id
                 });
 
-                const aiResponse =
-                    await askAI(
-                        'Code Explanation',
+                const prompt =
+                    buildCodePrompt(
                         codeData.text
                     );
+
+                const aiResponse =
+                    await askAI(prompt);
 
                 responseElement.innerText =
                     typeof aiResponse === 'string'
@@ -1537,11 +1621,13 @@ function showSelectionExplainButton() {
 
             try {
 
-                const aiResponse =
-                    await askAI(
-                        'Selected Text',
+                const prompt =
+                    buildSelectionPrompt(
                         selectedText
                     );
+
+                const aiResponse =
+                    await askAI(prompt);
 
                 console.log(
                     'AI RESPONSE:',
