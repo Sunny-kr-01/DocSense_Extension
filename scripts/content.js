@@ -100,7 +100,7 @@ function extractSections(root) {
             }
 
             const text =
-                currentElement.textContent.trim();
+                currentElement.innerText.trim();
 
             if (text) {
                 sectionContent.push(text);
@@ -733,8 +733,9 @@ function openSearchAssistant() {
                     );
 
                 responseElement.innerHTML =
-                    aiResponse
-                        .replace(/\n/g, '<br>');
+                    formatSearchResponse(
+                        aiResponse
+                    );
 
             }
         );
@@ -951,15 +952,26 @@ async function askSearchAI(userQuery) {
                         section.content.join(' ')
                     ).toLowerCase();
 
-                return userQuery
-                    .toLowerCase()
-                    .split(' ')
-                    .some(word =>
+                const queryWords =
+                    userQuery
+                        .toLowerCase()
+                        .split(/\s+/)
+                        .filter(
+                            word =>
+                                word.length > 2
+                        );
+                return queryWords.some(
+                    word =>
                         combined.includes(word)
-                    );
+                );
 
             })
             .slice(0, 5);
+    if (relevantSections.length === 0) {
+
+        return 'I could not find a relevant section on this page. Try searching with different keywords or check another documentation page.';
+
+    }
 
     const formattedSections =
         relevantSections.map(
@@ -974,7 +986,7 @@ ${section.heading}
 
 CONTENT:
 ${section.content
-                        .slice(0, 2)
+                        .slice(0, 3)
                         .join('\n')}
 `;
             }
@@ -982,8 +994,6 @@ ${section.content
 
     const prompt = `
 You are Docsense AI.
-
-You help developers navigate documentation.
 
 Current page:
 ${data.url}
@@ -998,16 +1008,26 @@ Relevant documentation sections:
 ${formattedSections}
 
 Your task:
-- Guide the user to the most relevant section
-- Mention section names clearly
-- If this page does not contain the answer, say so
-- Suggest what kind of documentation/page the user should search for instead
-- Keep response concise and practical
+
+- Answer the user's question using information from the current page whenever possible.
+- Use the provided documentation sections as context.
+- Explain how the current page relates to the user's goal.
+- Mention the most relevant section title.
+- If useful, suggest an implementation approach or code pattern.
+- If the page only partially answers the question, explain what is missing.
+- Do not simply tell the user to navigate somewhere.
+- Be practical and action-oriented.
+- Keep the response concise,short and readable.
+
+Response Format:
+
+Answer
+
+SECTION: [exact section title if relevant]
 `;
 
     const response =
         await askAI(
-            'Documentation Search',
             prompt
         );
 
@@ -1119,8 +1139,6 @@ function injectHeadingButtons(sections) {
         const headingElement = sectionData.element;
 
         const ignoredHeadings = [
-            'overview',
-            'description',
             'example',
             'examples',
             'see also'
@@ -1130,12 +1148,6 @@ function injectHeadingButtons(sections) {
             ignoredHeadings.includes(
                 sectionData.heading.toLowerCase()
             )
-        ) {
-            return;
-        }
-
-        if (
-            sectionData.content.join(' ').length < 120
         ) {
             return;
         }
