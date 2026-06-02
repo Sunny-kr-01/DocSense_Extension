@@ -312,10 +312,6 @@ function extractCodeBlocks(root) {
 
 }
 
-// ==============================
-// EXTRACT PAGE DATA
-// ==============================
-
 function extractPageData() {
 
     const root = getArticleRoot();
@@ -346,21 +342,17 @@ function extractPageData() {
 
 }
 
-// ==============================
-// STYLE AI BUTTON
-// ==============================
-
 function styleInjectedButton(button) {
 
     button.src = chrome.runtime.getURL('images/logo.png');
 
     button.alt = 'Docsense AI';
 
-    button.style.width = '22px';
-    button.style.height = '22px';
+    button.style.width = '16px';
+    button.style.height = '16px';
 
-    button.style.minWidth = '22px';
-    button.style.minHeight = '22px';
+    button.style.minWidth = '16px';
+    button.style.minHeight = '16px';
 
     button.style.display = 'inline-block';
 
@@ -400,11 +392,6 @@ function styleInjectedButton(button) {
 
 }
 
-
-
-// ==============================
-// INJECT HEADING BUTTONS
-// ==============================
 
 function removeExistingPopup() {
 
@@ -595,6 +582,66 @@ function createAssistantPopup(x, y, headingText) {
         );
 
     document.body.appendChild(popup);
+
+    let isDragging = false;
+
+    let offsetX = 0;
+
+    let offsetY = 0;
+
+    popup.addEventListener(
+        'mousedown',
+        (event) => {
+
+            if (
+                event.target.closest(
+                    '.docsense-response'
+                )
+            ) {
+                return;
+            }
+
+            isDragging = true;
+
+            offsetX =
+                event.clientX -
+                popup.offsetLeft;
+
+            offsetY =
+                event.clientY -
+                popup.offsetTop;
+
+        }
+    );
+
+    document.addEventListener(
+        'mousemove',
+        (event) => {
+
+            if (!isDragging) {
+                return;
+            }
+
+            popup.style.left =
+                `${event.clientX - offsetX}px`;
+
+            popup.style.top =
+                `${event.clientY - offsetY}px`;
+
+            popup.style.right =
+                'auto';
+
+        }
+    );
+
+    document.addEventListener(
+        'mouseup',
+        () => {
+
+            isDragging = false;
+
+        }
+    );
 
 }
 
@@ -1375,7 +1422,23 @@ function injectFloatingSearchButton() {
     button.className =
         'docsense-floating-search';
 
-    button.innerText = 'Docsense AI';
+    button.innerHTML = `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <circle
+        cx="11"
+        cy="11"
+        r="7"
+        stroke="currentColor"
+        stroke-width="2"
+    />
+    <path
+        d="M20 20L16.5 16.5"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+    />
+</svg>
+`;
 
     button.style.position = 'fixed';
 
@@ -1385,8 +1448,20 @@ function injectFloatingSearchButton() {
 
     button.style.zIndex = '999999';
 
-    button.style.padding =
-        '10px 16px';
+    button.style.width =
+        '40px';
+
+    button.style.height =
+        '40px';
+
+    button.style.display =
+        'flex';
+
+    button.style.alignItems =
+        'center';
+
+    button.style.justifyContent =
+        'center';
 
     button.style.borderRadius =
         '999px';
@@ -1440,8 +1515,11 @@ function injectFloatingSearchButton() {
     selectionButton.className =
         'docsense-selection-toggle';
 
-    selectionButton.innerText =
-        'Selection OFF';
+    selectionButton.innerHTML = `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+</svg>
+`;
 
     selectionButton.style.position =
         'fixed';
@@ -1455,17 +1533,47 @@ function injectFloatingSearchButton() {
     selectionButton.style.zIndex =
         '999999';
 
-    selectionButton.style.padding =
-        '10px 16px';
+    selectionButton.style.width =
+        '40px';
+
+    selectionButton.style.height =
+        '40px';
+
+    selectionButton.style.display =
+        'flex';
+
+    selectionButton.style.alignItems =
+        'center';
+
+    selectionButton.style.justifyContent =
+        'center';
+
+    selectionButton.style.transition =
+        'all 0.22s ease';
 
     selectionButton.style.borderRadius =
         '999px';
 
     selectionButton.style.background =
-        '#22c55e';
+        'rgba(139,92,246,0.12)';
+
+    selectionButton.style.border =
+        '1px solid rgba(139,92,246,0.3)';
 
     selectionButton.style.color =
-        'white';
+        'rgba(255,255,255,0.55)';
+
+    selectionButton.style.boxShadow =
+        '0 0 10px rgba(139,92,246,0.18)';
+
+    selectionButton.style.backdropFilter =
+        'blur(8px)';
+
+    selectionButton.style.border =
+        '1px solid rgba(255,255,255,0.06)';
+
+    selectionButton.style.color =
+        'rgba(255,255,255,0.18)';
 
     selectionButton.style.cursor =
         'pointer';
@@ -1482,11 +1590,49 @@ function injectFloatingSearchButton() {
             selectionMode =
                 !selectionMode;
 
-            selectionButton.innerText =
-                selectionMode
-                    ? 'Selection ON'
-                    : 'Selection OFF';
+            if (selectionMode) {
 
+                selectionButton.style.background =
+                    'rgba(139,92,246,0.4)';
+
+                selectionButton.style.border =
+                    '1px solid rgba(139,92,246,0.8)';
+
+                selectionButton.style.color =
+                    'white';
+
+                selectionButton.style.boxShadow =
+                    '0 0 24px rgba(139,92,246,0.65)';
+
+            }
+            else {
+
+                selectionButton.style.background =
+                    'rgba(139,92,246,0.12)';
+
+                selectionButton.style.border =
+                    '1px solid rgba(139,92,246,0.3)';
+
+                selectionButton.style.color =
+                    'rgba(255,255,255,0.55)';
+
+                selectionButton.style.boxShadow =
+                    '0 0 10px rgba(139,92,246,0.18)';
+
+            }
+
+            selectionButton.innerHTML =
+                selectionMode
+                    ? `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+</svg>
+`
+                    : `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+</svg>
+`;
         }
     );
 
@@ -1494,18 +1640,90 @@ function injectFloatingSearchButton() {
         selectionButton
     );
 
+    selectionButton.addEventListener(
+        'mouseenter',
+        () => {
+
+            selectionButton.innerHTML =
+                selectionMode
+                    ? `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+</svg>
+<span style="margin-left:8px">
+    ON
+</span>
+`
+                    : `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+</svg>
+<span style="margin-left:8px">
+    OFF
+</span>
+`;
+
+            selectionButton.style.width =
+                '70px';
+
+        }
+    );
+
+    selectionButton.addEventListener(
+        'mouseleave',
+        () => {
+
+            selectionButton.innerHTML =
+                selectionMode
+                    ? `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+</svg>
+`
+                    : `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+</svg>
+`;
+            selectionButton.style.width =
+                '40px';
+
+        }
+    );
+
     button.addEventListener(
         'mouseenter',
         () => {
+
+            button.innerHTML = `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <circle
+        cx="11"
+        cy="11"
+        r="7"
+        stroke="currentColor"
+        stroke-width="2"
+    />
+    <path
+        d="M20 20L16.5 16.5"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+    />
+</svg>
+<span style="margin-left:8px">
+    Search Assistant
+</span>
+`;
+
+            button.style.width =
+                '170px';
 
             button.style.background =
                 'rgba(139,92,246,0.92)';
 
             button.style.color =
                 'white';
-
-            button.style.transform =
-                'translateY(-2px)';
 
         }
     );
@@ -1514,14 +1732,32 @@ function injectFloatingSearchButton() {
         'mouseleave',
         () => {
 
+            button.innerHTML = `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <circle
+        cx="11"
+        cy="11"
+        r="7"
+        stroke="currentColor"
+        stroke-width="2"
+    />
+    <path
+        d="M20 20L16.5 16.5"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+    />
+</svg>
+`;
+
+            button.style.width =
+                '40px';
+
             button.style.background =
                 'rgba(139,92,246,0.08)';
 
             button.style.color =
                 'rgba(255,255,255,0.18)';
-
-            button.style.transform =
-                'translateY(0px)';
 
         }
     );
@@ -1599,8 +1835,26 @@ function showSelectionExplainButton() {
     button.className =
         'docsense-selection-explain';
 
-    button.innerText =
-        '✨ Explain';
+    button.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle
+                cx="11"
+                cy="11"
+                r="7"
+                stroke="currentColor"
+                stroke-width="2"
+            />
+            <path
+                d="M20 20L16.5 16.5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+            />
+        </svg>
+        <span style="margin-left:8px">
+            Explain
+        </span>
+    `;
 
     button.style.position =
         'fixed';
@@ -1634,6 +1888,21 @@ function showSelectionExplainButton() {
 
     button.style.cursor =
         'pointer';
+
+    button.style.display =
+        'flex';
+
+    button.style.alignItems =
+        'center';
+
+    button.style.justifyContent =
+        'center';
+
+    button.style.gap =
+        '8px';
+
+    button.style.whiteSpace =
+        'nowrap';
 
     button.addEventListener(
         'click',
