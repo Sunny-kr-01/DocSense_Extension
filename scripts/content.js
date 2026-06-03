@@ -348,11 +348,11 @@ function styleInjectedButton(button) {
 
     button.alt = 'Docsense AI';
 
-    button.style.width = '16px';
-    button.style.height = '16px';
+    button.style.width = '36px';
+    button.style.height = '36px';
 
-    button.style.minWidth = '16px';
-    button.style.minHeight = '16px';
+    button.style.minWidth = '36px';
+    button.style.minHeight = '36px';
 
     button.style.display = 'inline-block';
 
@@ -375,6 +375,21 @@ function styleInjectedButton(button) {
     button.style.flexShrink = '0';
 
     button.style.zIndex = '9999';
+
+    button.style.background =
+        'transparent';
+
+    button.style.border =
+        'none';
+
+    button.style.borderRadius =
+        '0';
+
+    button.style.margin =
+        '0';
+
+    button.style.display =
+        'inline-block';
 
     button.addEventListener('mouseenter', () => {
 
