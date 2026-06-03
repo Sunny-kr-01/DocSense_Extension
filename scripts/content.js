@@ -1071,21 +1071,30 @@ ${formattedSections}
 
 Your task:
 
-- Answer the user's question using information from the current page whenever possible.
-- Use the provided documentation sections as context.
-- Explain how the current page relates to the user's goal.
-- Mention the most relevant section title.
-- If useful, suggest an implementation approach or code pattern.
+- Answer the user's question using information from the current page.
+- Act like a documentation mentor, not a search engine.
+- Guide the user toward achieving their goal.
+- Explain which sections they should read and in what order.
+- Suggest practical next steps when appropriate.
+- If code examples exist on the page, mention which section contains them.
 - If the page only partially answers the question, explain what is missing.
-- Do not simply tell the user to navigate somewhere.
-- Be practical and action-oriented.
-- Keep the response concise,short and readable.
+- Keep the response concise, readable, and actionable.
+- Use short paragraphs or bullet points.
+- Never invent section names.
+- Only use section titles from the provided sections.
 
 Response Format:
 
-Answer
+[answer]
 
-SECTION: [exact section title if relevant]
+SECTION: [exact section title]
+SECTION: [exact section title]
+
+Rules:
+- Each SECTION must be on its own line.
+- Do not combine multiple sections into one SECTION line.
+- Return at most 3 SECTION lines.
+- If no section is relevant, do not return any SECTION line.
 `;
 
     const response =
@@ -1164,12 +1173,26 @@ function formatSearchResponse(text) {
                     () => {
 
                         const title =
-                            button.dataset.section;
+                            button.dataset.section
+                                .toLowerCase()
+                                .trim();
 
                         const section =
                             window.docsenseData.sections.find(
-                                (s) =>
-                                    s.heading === title
+                                (s) => {
+
+                                    const heading =
+                                        s.heading
+                                            .toLowerCase()
+                                            .trim();
+
+                                    return (
+                                        heading === title ||
+                                        heading.includes(title) ||
+                                        title.includes(heading)
+                                    );
+
+                                }
                             );
 
                         if (
@@ -1482,16 +1505,19 @@ function injectFloatingSearchButton() {
         '999px';
 
     button.style.background =
-        'rgba(139,92,246,0.08)';
+        'rgba(139,92,246,0.12)';
 
     button.style.backdropFilter =
         'blur(8px)';
 
     button.style.border =
-        '1px solid rgba(255,255,255,0.06)';
+        '1px solid rgba(139,92,246,0.30)';
 
     button.style.color =
-        'rgba(255,255,255,0.18)';
+        '#8b5cf6';
+
+    button.style.boxShadow =
+        '0 0 10px rgba(139,92,246,0.18)';
 
     button.style.fontWeight =
         '600';
@@ -1563,6 +1589,9 @@ function injectFloatingSearchButton() {
     selectionButton.style.justifyContent =
         'center';
 
+    selectionButton.style.paddingLeft =
+        '3px';
+
     selectionButton.style.transition =
         'all 0.22s ease';
 
@@ -1573,22 +1602,16 @@ function injectFloatingSearchButton() {
         'rgba(139,92,246,0.12)';
 
     selectionButton.style.border =
-        '1px solid rgba(139,92,246,0.3)';
+        '1px solid rgba(139,92,246,0.30)';
 
     selectionButton.style.color =
-        'rgba(255,255,255,0.55)';
+        '#8b5cf6';
 
     selectionButton.style.boxShadow =
         '0 0 10px rgba(139,92,246,0.18)';
 
     selectionButton.style.backdropFilter =
         'blur(8px)';
-
-    selectionButton.style.border =
-        '1px solid rgba(255,255,255,0.06)';
-
-    selectionButton.style.color =
-        'rgba(255,255,255,0.18)';
 
     selectionButton.style.cursor =
         'pointer';
@@ -1626,10 +1649,10 @@ function injectFloatingSearchButton() {
                     'rgba(139,92,246,0.12)';
 
                 selectionButton.style.border =
-                    '1px solid rgba(139,92,246,0.3)';
+                    '1px solid rgba(139,92,246,0.30)';
 
                 selectionButton.style.color =
-                    'rgba(255,255,255,0.55)';
+                    '#8b5cf6';
 
                 selectionButton.style.boxShadow =
                     '0 0 10px rgba(139,92,246,0.18)';
@@ -1769,10 +1792,13 @@ function injectFloatingSearchButton() {
                 '40px';
 
             button.style.background =
-                'rgba(139,92,246,0.08)';
+                'rgba(139,92,246,0.12)';
+
+            button.style.border =
+                '1px solid rgba(139,92,246,0.30)';
 
             button.style.color =
-                'rgba(255,255,255,0.18)';
+                '#8b5cf6';
 
         }
     );
