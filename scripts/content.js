@@ -1,11 +1,8 @@
-console.log('CONTENT JS RUNNING');
-console.log('MARKED:', marked);
 
 let selectionMode = false;
 let selectedText = '';
 
-if (window.docsenseInjected) {
-    console.log('Docsense already active');
+    if (window.docsenseInjected) {
 } else {
     window.docsenseInjected = true;
     initializeDocsense();
@@ -46,16 +43,12 @@ function getArticleRoot() {
         const element = document.querySelector(selector);
 
         if (element) {
-
-            console.log('Using root:', selector);
-
             return element;
-
         }
 
     }
 
-    console.log('Falling back to document.body');
+    
 
     return document.body;
 
@@ -319,11 +312,7 @@ function extractPageData() {
 
 
     if (!root) {
-
-        console.log('No root found');
-
         return null;
-
     }
 
 
@@ -407,7 +396,6 @@ function styleInjectedButton(button) {
 
 }
 
-
 function removeExistingPopup() {
 
     const existingPopup = document.querySelector('.docsense-popup');
@@ -417,8 +405,6 @@ function removeExistingPopup() {
     }
 
 }
-
-
 
 function createAssistantPopup(x, y, headingText) {
 
@@ -959,14 +945,47 @@ async function askAI(prompt) {
 
                         try {
 
-                            console.log(response);
-
                             if (response?.error) {
-                                resolve(
+
+                                const errorMessage =
                                     response.error.message ||
-                                    'Unknown AI error'
-                                );
+                                    'Unknown AI error';
+
+                                const lower =
+                                    errorMessage.toLowerCase();
+
+                                if (
+                                    lower.includes('quota') ||
+                                    lower.includes('429')
+                                ) {
+
+                                    resolve(
+                                        'Gemini API quota exceeded.\n\nYour API key has reached its usage limit.\n\nPlease wait for quota reset or use another API key.'
+                                    );
+
+                                    return;
+
+                                }
+
+                                if (
+                                    lower.includes('503') ||
+                                    lower.includes('busy') ||
+                                    lower.includes('overloaded') ||
+                                    lower.includes('unavailable')
+                                ) {
+
+                                    resolve(
+                                        'Gemini is currently under heavy load.\n\nRetrying after a few seconds often fixes this issue.'
+                                    );
+
+                                    return;
+
+                                }
+
+                                resolve(errorMessage);
+
                                 return;
+
                             }
 
                             const text =
@@ -1284,7 +1303,7 @@ function injectHeadingButtons(sections) {
                     '\n\n' +
                     sectionData.content.join('\n\n');
 
-                console.log('ASKING AI...');
+                
 
                 const prompt =
                     buildDocumentationPrompt(
@@ -1295,10 +1314,7 @@ function injectHeadingButtons(sections) {
                 const aiResponse =
                     await askAI(prompt);
 
-                console.log(
-                    'AI RESPONSE:',
-                    aiResponse
-                );
+                
 
                 responseElement.innerHTML =
                     marked.parse(
@@ -1405,11 +1421,7 @@ function injectCodeButtons(codeBlocks) {
                         '.docsense-response'
                     );
 
-                console.log({
-                    type: 'code',
-                    code: codeData.text,
-                    id: codeData.id
-                });
+                
 
                 const prompt =
                     buildCodePrompt(
@@ -1419,10 +1431,7 @@ function injectCodeButtons(codeBlocks) {
                 const aiResponse =
                     await askAI(prompt);
 
-                console.log(
-                    'AI RESPONSE:',
-                    aiResponse
-                );
+                
 
                 responseElement.innerHTML =
                     marked.parse(
@@ -1826,10 +1835,7 @@ function initializeSelectionMode() {
 
             selectedText = text;
 
-            console.log(
-                'SELECTED:',
-                selectedText
-            );
+            
 
             const oldButton =
                 document.querySelector(
@@ -1980,15 +1986,7 @@ function showSelectionExplainButton() {
                 const aiResponse =
                     await askAI(prompt);
 
-                console.log(
-                    'AI RESPONSE:',
-                    aiResponse
-                );
-
-                console.log(
-                    'RESPONSE ELEMENT:',
-                    responseElement
-                );
+                
 
                 responseElement.innerHTML =
                     marked.parse(
@@ -2078,9 +2076,6 @@ function initializeDocsense() {
     const extractedData = extractPageData();
 
     window.docsenseData = extractedData;
-
-    console.log('EXTRACTED DATA');
-    console.log(extractedData);
 
     if (extractedData) {
 

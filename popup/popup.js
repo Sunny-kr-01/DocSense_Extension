@@ -1,12 +1,32 @@
-const apiKeyInput =document.getElementById('apiKeyInput');
+const apiKeyInput =
+    document.getElementById(
+        'apiKeyInput'
+    );
 
-const saveButton =document.getElementById('saveButton');
+const saveButton =
+    document.getElementById(
+        'saveButton'
+    );
 
-const statusText =document.getElementById('statusText');
+const activateButton =
+    document.getElementById(
+        'activateButton'
+    );
 
+const getApiKeyButton =
+    document.getElementById(
+        'getApiKeyButton'
+    );
+
+const statusText =
+    document.getElementById(
+        'statusText'
+    );
 
 chrome.storage.local.get(
+
     ['geminiApiKey'],
+
     (result) => {
 
         if (result.geminiApiKey) {
@@ -17,61 +37,65 @@ chrome.storage.local.get(
         }
 
     }
+
 );
 
+getApiKeyButton.addEventListener(
 
+    'click',
 
-// =========================
-// SAVE API KEY
-// =========================
+    () => {
+
+        chrome.tabs.create({
+
+            url:
+                'https://aistudio.google.com/app/apikey'
+
+        });
+
+    }
+
+);
 
 saveButton.addEventListener(
+
     'click',
+
     () => {
 
         const apiKey =
             apiKeyInput.value.trim();
 
-
-
         if (!apiKey) {
 
             statusText.innerText =
-                'Please enter API key';
+                'Please enter an API key';
 
             return;
 
         }
 
-
-
         chrome.storage.local.set(
 
             {
 
-                geminiApiKey: apiKey
+                geminiApiKey:
+                    apiKey
 
             },
 
             () => {
 
                 statusText.innerText =
-                    'API Key Saved';
-                    console.log('API Key saved:', apiKey);
+                    'Gemini API Key Saved';
 
             }
 
         );
 
     }
+
 );
-
-const activateButton =
-    document.getElementById(
-        'activateButton'
-    );
-
-
 
 activateButton.addEventListener(
 
@@ -89,8 +113,6 @@ activateButton.addEventListener(
 
             });
 
-
-
         chrome.scripting.executeScript({
 
             target: {
@@ -107,7 +129,9 @@ activateButton.addEventListener(
             ]
 
         });
-        statusText.innerText = 'Docsense activated on page';
+
+        statusText.innerText =
+            'Docsense activated on page';
 
     }
 

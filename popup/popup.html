@@ -8,7 +8,6 @@
     <title>Docsense AI</title>
 
     <style>
-
         body {
 
             width: 300px;
@@ -23,17 +22,27 @@
 
         }
 
-
-
         h2 {
 
             margin-top: 0;
 
             font-size: 20px;
 
+            margin-bottom: 8px;
+
         }
 
+        .subtitle {
 
+            opacity: 0.8;
+
+            font-size: 13px;
+
+            line-height: 1.5;
+
+            margin-bottom: 14px;
+
+        }
 
         input {
 
@@ -45,8 +54,6 @@
 
             border: none;
 
-            margin-top: 10px;
-
             outline: none;
 
             background: #1f2937;
@@ -57,13 +64,11 @@
 
         }
 
-
-
         button {
 
             width: 100%;
 
-            margin-top: 14px;
+            margin-top: 12px;
 
             padding: 10px;
 
@@ -81,7 +86,11 @@
 
         }
 
+        .secondary-button {
 
+            background: #27272a;
+
+        }
 
         .status {
 
@@ -92,7 +101,6 @@
             font-size: 14px;
 
         }
-
     </style>
 
 </head>
@@ -101,35 +109,34 @@
 
     <h2>Docsense AI</h2>
 
+    <div class="subtitle">
 
+        Docsense currently uses Google's Gemini API.
+        Generate a free API key and paste it below.
 
-    <input
-        type="password"
-        id="apiKeyInput"
-        placeholder="Enter Gemini API Key"
-    />
+    </div>
 
+    <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key" />
 
+    <button id="getApiKeyButton" class="secondary-button">
+
+        Get Gemini API Key
+
+    </button>
 
     <button id="saveButton">
 
-        Save API Key
+        Save Gemini API Key
 
     </button>
 
     <button id="activateButton">
 
-    Activate Docsense
+        Activate Docsense
 
-</button>
+    </button>
 
-
-    <div
-        class="status"
-        id="statusText"
-    ></div>
-
-
+    <div class="status" id="statusText"></div>
 
     <script src="popup.js"></script>
 
