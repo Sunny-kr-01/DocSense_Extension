@@ -2,7 +2,7 @@
 let selectionMode = false;
 let selectedText = '';
 
-    if (window.docsenseInjected) {
+if (window.docsenseInjected) {
 } else {
     window.docsenseInjected = true;
     initializeDocsense();
@@ -48,7 +48,7 @@ function getArticleRoot() {
 
     }
 
-    
+
 
     return document.body;
 
@@ -1196,23 +1196,25 @@ function formatSearchResponse(text) {
                                 .toLowerCase()
                                 .trim();
 
-                        const section =
+                        const exactMatch =
                             window.docsenseData.sections.find(
-                                (s) => {
-
-                                    const heading =
-                                        s.heading
-                                            .toLowerCase()
-                                            .trim();
-
-                                    return (
-                                        heading === title ||
-                                        heading.includes(title) ||
-                                        title.includes(heading)
-                                    );
-
-                                }
+                                s =>
+                                    s.heading
+                                        .toLowerCase()
+                                        .trim() === title
                             );
+
+                        const partialMatch =
+                            window.docsenseData.sections.find(
+                                s =>
+                                    s.heading
+                                        .toLowerCase()
+                                        .trim()
+                                        .includes(title)
+                            );
+
+                        const section =
+                            exactMatch || partialMatch;
 
                         if (
                             section?.element
@@ -1303,7 +1305,7 @@ function injectHeadingButtons(sections) {
                     '\n\n' +
                     sectionData.content.join('\n\n');
 
-                
+
 
                 const prompt =
                     buildDocumentationPrompt(
@@ -1314,7 +1316,7 @@ function injectHeadingButtons(sections) {
                 const aiResponse =
                     await askAI(prompt);
 
-                
+
 
                 responseElement.innerHTML =
                     marked.parse(
@@ -1421,7 +1423,7 @@ function injectCodeButtons(codeBlocks) {
                         '.docsense-response'
                     );
 
-                
+
 
                 const prompt =
                     buildCodePrompt(
@@ -1431,7 +1433,7 @@ function injectCodeButtons(codeBlocks) {
                 const aiResponse =
                     await askAI(prompt);
 
-                
+
 
                 responseElement.innerHTML =
                     marked.parse(
@@ -1835,7 +1837,7 @@ function initializeSelectionMode() {
 
             selectedText = text;
 
-            
+
 
             const oldButton =
                 document.querySelector(
@@ -1986,7 +1988,7 @@ function showSelectionExplainButton() {
                 const aiResponse =
                     await askAI(prompt);
 
-                
+
 
                 responseElement.innerHTML =
                     marked.parse(
