@@ -3,6 +3,11 @@ const apiKeyInput =
         'apiKeyInput'
     );
 
+const modelSelect =
+    document.getElementById(
+        'modelSelect'
+    );
+
 const saveButton =
     document.getElementById(
         'saveButton'
@@ -25,7 +30,7 @@ const statusText =
 
 chrome.storage.local.get(
 
-    ['geminiApiKey'],
+    ['geminiApiKey', 'geminiModel'],
 
     (result) => {
 
@@ -33,6 +38,12 @@ chrome.storage.local.get(
 
             apiKeyInput.value =
                 result.geminiApiKey;
+
+        }
+        if (result.geminiModel) {
+
+            modelSelect.value =
+                result.geminiModel;
 
         }
 
@@ -80,7 +91,9 @@ saveButton.addEventListener(
             {
 
                 geminiApiKey:
-                    apiKey
+                    apiKey,
+                geminiModel:
+                    modelSelect.value
 
             },
 

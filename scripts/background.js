@@ -18,11 +18,9 @@ chrome.runtime.onMessage.addListener(
                 const aiResponse =
 
                     await askGemini(
-
                         message.prompt,
-
-                        message.apiKey
-
+                        message.apiKey,
+                        message.model
                     );
 
 

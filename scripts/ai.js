@@ -1,7 +1,7 @@
 async function askGemini(
     prompt,
     apiKey,
-    model = 'gemini-2.5-flash'
+    model = model
 ) {
 
     const makeRequest = async () => {

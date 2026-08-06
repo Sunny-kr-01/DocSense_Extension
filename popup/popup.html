@@ -9,97 +9,71 @@
 
     <style>
         body {
-
             width: 300px;
-
             padding: 18px;
-
             font-family: sans-serif;
-
             background: #111827;
-
             color: white;
-
         }
 
         h2 {
-
-            margin-top: 0;
-
+            margin: 0 0 8px;
             font-size: 20px;
-
-            margin-bottom: 8px;
-
         }
 
         .subtitle {
-
-            opacity: 0.8;
-
+            opacity: .8;
             font-size: 13px;
-
             line-height: 1.5;
-
-            margin-bottom: 14px;
-
+            margin-bottom: 18px;
         }
 
-        input {
-
+        input,
+        select {
             width: 100%;
-
-            padding: 10px;
-
-            border-radius: 8px;
-
+            height: 36px;
+            padding: 0 14px;
             border: none;
-
             outline: none;
-
+            border-radius: 10px;
             background: #1f2937;
-
             color: white;
-
+            font-size: 15px;
             box-sizing: border-box;
-
+            margin-bottom: 12px;
         }
 
         button {
-
             width: 100%;
-
-            margin-top: 12px;
-
-            padding: 10px;
-
+            height: 36px;
+            margin-top: 0;
+            margin-bottom: 12px;
             border: none;
-
-            border-radius: 8px;
-
+            border-radius: 10px;
             background: #8b5cf6;
-
             color: white;
-
-            font-weight: bold;
-
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
+            transition: background 0.2s ease;
+        }
 
+        button:hover {
+            background: #7c3aed;
         }
 
         .secondary-button {
-
             background: #27272a;
+        }
 
+        .secondary-button:hover {
+            background: #3f3f46;
         }
 
         .status {
-
-            margin-top: 12px;
-
-            opacity: 0.8;
-
+            margin-top: 14px;
             font-size: 14px;
-
+            opacity: .8;
         }
     </style>
 
@@ -117,6 +91,22 @@
     </div>
 
     <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key" />
+
+    <select id="modelSelect">
+
+        <option value="gemini-2.5-flash">
+            Gemini 2.5 Flash (Recommended)
+        </option>
+
+        <option value="gemini-2.5-pro">
+            Gemini 2.5 Pro
+        </option>
+
+        <option value="gemini-2.0-flash">
+            Gemini 2.0 Flash
+        </option>
+
+    </select>
 
     <button id="getApiKeyButton" class="secondary-button">
 

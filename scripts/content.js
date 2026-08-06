@@ -916,10 +916,11 @@ async function askAI(prompt) {
     return new Promise((resolve) => {
 
         chrome.storage.local.get(
-            ['geminiApiKey'],
+            ['geminiApiKey','geminiModel'],
             (result) => {
 
                 const apiKey = result.geminiApiKey;
+                const geminiModel = result.geminiModel || 'gemini-2.5-flash';
 
                 if (!apiKey) {
                     resolve('No Gemini API key found.');
@@ -932,7 +933,8 @@ async function askAI(prompt) {
                     {
                         type: 'ASK_GEMINI',
                         prompt,
-                        apiKey
+                        apiKey,
+                        model : geminiModel
                     },
 
                     (response) => {
