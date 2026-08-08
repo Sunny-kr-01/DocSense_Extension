@@ -916,7 +916,7 @@ async function askAI(prompt) {
     return new Promise((resolve) => {
 
         chrome.storage.local.get(
-            ['geminiApiKey','geminiModel'],
+            ['geminiApiKey', 'geminiModel'],
             (result) => {
 
                 const apiKey = result.geminiApiKey;
@@ -934,7 +934,7 @@ async function askAI(prompt) {
                         type: 'ASK_GEMINI',
                         prompt,
                         apiKey,
-                        model : geminiModel
+                        model: geminiModel
                     },
 
                     (response) => {
@@ -2003,10 +2003,8 @@ function showSelectionExplainButton() {
 
                 console.error(error);
 
-                responseElement.innerHTML =
-                    renderAIResponse(
-                        'Failed to get AI response.'
-                    );
+                responseElement.innerText =
+                    'Failed to get AI response.';
 
             }
 

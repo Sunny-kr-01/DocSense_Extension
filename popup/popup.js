@@ -175,41 +175,51 @@ saveButton.addEventListener(
 );
 
 activateButton.addEventListener(
-
     'click',
-
     async () => {
 
-        const [tab] =
+        try {
 
-            await chrome.tabs.query({
+            const [tab] =
+                await chrome.tabs.query({
 
-                active: true,
+                    active: true,
 
-                currentWindow: true
+                    currentWindow: true
+
+                });
+
+            await chrome.scripting.executeScript({
+
+                target: {
+
+                    tabId: tab.id
+
+                },
+
+                files: [
+
+                    'libs/marked.min.js',
+                    'scripts/content.js'
+
+                ]
 
             });
 
-        chrome.scripting.executeScript({
+            statusText.innerText =
+                'Docsense activated on page';
 
-            target: {
+        } catch (error) {
 
-                tabId: tab.id
+            console.error(
+                'Docsense activation failed:',
+                error
+            );
 
-            },
+            statusText.innerText =
+                'Could not activate Docsense on this page.';
 
-            files: [
-
-                'libs/marked.min.js',
-                'scripts/content.js'
-
-            ]
-
-        });
-
-        statusText.innerText =
-            'Docsense activated on page';
+        }
 
     }
-
 );

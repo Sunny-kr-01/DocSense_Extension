@@ -6,16 +6,6 @@ async function askGemini(
 
     const makeRequest = async () => {
 
-        console.log(
-            'Docsense AI → Gemini Request',
-            {
-                model: model,
-                apiKeyPresent: !!apiKey,
-                endpoint:
-                    `v1beta/models/${model}:generateContent`
-            }
-        );
-
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
             {
