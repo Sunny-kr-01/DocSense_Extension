@@ -1,10 +1,20 @@
 async function askGemini(
     prompt,
     apiKey,
-    model = model
+    model = 'gemini-2.5-flash'
 ) {
 
     const makeRequest = async () => {
+
+        console.log(
+            'Docsense AI → Gemini Request',
+            {
+                model: model,
+                apiKeyPresent: !!apiKey,
+                endpoint:
+                    `v1beta/models/${model}:generateContent`
+            }
+        );
 
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -37,7 +47,7 @@ async function askGemini(
         const data =
             await makeRequest();
 
-        
+
 
         const errorMessage =
             data?.error?.message
@@ -55,7 +65,7 @@ async function askGemini(
 
         if (shouldRetry) {
 
-            
+
 
             await new Promise(
                 resolve =>
@@ -68,7 +78,7 @@ async function askGemini(
             const retryData =
                 await makeRequest();
 
-            
+
 
             return retryData;
 

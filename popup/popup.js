@@ -8,6 +8,34 @@ const modelSelect =
         'modelSelect'
     );
 
+const customModelInput =
+    document.getElementById(
+        'customModelInput'
+    );
+
+modelSelect.addEventListener(
+    'change',
+    () => {
+
+        if (modelSelect.value === 'custom') {
+
+            customModelInput.style.display =
+                'block';
+
+            customModelInput.focus();
+
+        } else {
+
+            customModelInput.style.display =
+                'none';
+
+            customModelInput.value = '';
+
+        }
+
+    }
+);
+
 const saveButton =
     document.getElementById(
         'saveButton'
@@ -42,8 +70,31 @@ chrome.storage.local.get(
         }
         if (result.geminiModel) {
 
-            modelSelect.value =
-                result.geminiModel;
+            const exists =
+                [...modelSelect.options]
+                    .some(
+                        option =>
+                            option.value === result.geminiModel
+                    );
+
+
+            if (exists) {
+
+                modelSelect.value =
+                    result.geminiModel;
+
+            } else {
+
+                modelSelect.value =
+                    'custom';
+
+                customModelInput.value =
+                    result.geminiModel;
+
+                customModelInput.style.display =
+                    'block';
+
+            }
 
         }
 
@@ -86,6 +137,19 @@ saveButton.addEventListener(
 
         }
 
+        const selectedModel =
+            modelSelect.value === 'custom'
+                ? customModelInput.value.trim()
+                : modelSelect.value;
+
+        if (!selectedModel) {
+
+            statusText.innerText =
+                'Please enter a custom model name';
+
+            return;
+        }
+
         chrome.storage.local.set(
 
             {
@@ -93,7 +157,7 @@ saveButton.addEventListener(
                 geminiApiKey:
                     apiKey,
                 geminiModel:
-                    modelSelect.value
+                    selectedModel
 
             },
 
