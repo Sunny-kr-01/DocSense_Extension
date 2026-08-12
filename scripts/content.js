@@ -553,7 +553,14 @@ function createAssistantPopup(x, y, headingText) {
         )
         .addEventListener(
             'click',
-            () => {
+            (event) => {
+
+                event.stopPropagation();
+
+                const expandButton= popup.querySelector('.docsense-expand-btn');
+
+                expandButton.style.display = 'none';
+
                 popup.style.height = '75vh';
 
                 popup.style.width = '620px';
