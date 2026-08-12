@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DocsenseAI",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "AI-powered documentation assistant for developers.",
   "icons": {
     "16": "images/icon-16.png",
