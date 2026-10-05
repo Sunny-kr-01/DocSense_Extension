@@ -927,7 +927,7 @@ async function askAI(prompt) {
             (result) => {
 
                 const apiKey = result.geminiApiKey;
-                const geminiModel = result.geminiModel || 'gemini-2.5-flash';
+                const geminiModel = result.geminiModel || 'gemini-3.5-flash-lite';
 
                 if (!apiKey) {
                     resolve('No Gemini API key found.');
