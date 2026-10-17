@@ -557,7 +557,7 @@ function createAssistantPopup(x, y, headingText) {
 
                 event.stopPropagation();
 
-                const expandButton= popup.querySelector('.docsense-expand-btn');
+                const expandButton = popup.querySelector('.docsense-expand-btn');
 
                 expandButton.style.display = 'none';
 
@@ -651,6 +651,162 @@ function createAssistantPopup(x, y, headingText) {
         }
     );
 
+}
+
+
+function openCustomPromptDialog(x, y, contextTitle, contextContent) {
+
+    removeExistingPopup();
+
+    const popup = document.createElement('div');
+    popup.className = 'docsense-popup docsense-custom-dialog';
+
+    popup.style.cssText = `
+        position:fixed;
+        top:${Math.max(12, Math.min(y, window.innerHeight - 340))}px;
+        left:${Math.max(12, Math.min(x, window.innerWidth - 440))}px;
+        width:420px;
+        max-width:calc(100vw - 24px);
+        max-height:80vh;
+        overflow-y:auto;
+        box-sizing:border-box;
+        padding:16px;
+        border-radius:16px;
+        background:rgba(20,20,20,0.97);
+        color:white;
+        font:14px/1.6 sans-serif;
+        z-index:999999;
+        box-shadow:0 8px 24px rgba(0,0,0,0.35);
+        border:1px solid rgba(255,255,255,0.12);
+    `;
+
+    popup.innerHTML = `
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:12px">
+            <strong style="font-size:18px">Docsense AI</strong>
+            <button type="button" class="docsense-custom-close"
+                    aria-label="Close"
+                    style="background:none;border:none;color:white;
+                           font-size:22px;cursor:pointer">×</button>
+        </div>
+
+        <div style="margin-bottom:10px;color:#c4b5fd">
+            Custom Prompt
+        </div>
+
+        <div style="font-size:12px;opacity:.7;margin-bottom:8px">
+            Context: ${escapeCustomHTML(contextTitle)}
+        </div>
+
+        <textarea class="docsense-custom-input"
+            placeholder="What would you like Docsense AI to do?"
+            style="width:100%;min-height:100px;box-sizing:border-box;
+                   padding:12px;border:1px solid #444;border-radius:10px;
+                   background:#111;color:white;resize:vertical;
+                   font:inherit"></textarea>
+
+        <button type="button" class="docsense-custom-ask"
+            style="width:100%;margin-top:10px;padding:12px;border:0;
+                   border-radius:10px;background:#8b5cf6;color:white;
+                   font-weight:600;font-size:14px;cursor:pointer">
+            Ask Docsense
+        </button>
+
+        <div class="docsense-custom-response"
+             style="margin-top:14px;max-height:300px;overflow-y:auto;
+                    overflow-wrap:anywhere"></div>
+    `;
+
+    document.body.appendChild(popup);
+
+    const input = popup.querySelector('.docsense-custom-input');
+    const askButton = popup.querySelector('.docsense-custom-ask');
+    const responseElement =
+        popup.querySelector('.docsense-custom-response');
+
+    popup.querySelector('.docsense-custom-close')
+        .addEventListener('click', (event) => {
+            event.stopPropagation();
+            popup.remove();
+        });
+
+    // Interactions inside this popup must not trigger page-level handlers.
+    popup.addEventListener('click', (event) => {
+        event.stopPropagation();
+    });
+
+    askButton.addEventListener('click', async (event) => {
+
+        event.stopPropagation();
+
+        const instruction = input.value.trim();
+
+        if (!instruction) {
+            responseElement.innerText =
+                'Please enter an instruction first.';
+            input.focus();
+            return;
+        }
+
+        askButton.disabled = true;
+        askButton.innerText = 'Thinking...';
+        responseElement.innerText = 'Thinking...';
+
+        const prompt = `
+You are Docsense AI, a helpful programming and learning assistant.
+
+Current page URL:
+${window.location.href}
+
+Context title:
+${contextTitle}
+
+Relevant page content:
+${contextContent}
+
+User's custom instruction:
+${instruction}
+
+Follow the user's instruction using the supplied context when relevant.
+If the user asks about a related topic outside the supplied context,
+you may use general knowledge and clearly distinguish it from the page content.
+Do not claim that information appears on the page if it does not.
+Use clear, readable Markdown.
+`;
+
+        try {
+
+            const answer = await askAI(prompt);
+
+            if (!popup.isConnected) return;
+
+            responseElement.innerHTML =
+                marked.parse(String(answer));
+
+        } catch (error) {
+
+            console.error('Docsense custom prompt error:', error);
+
+            responseElement.innerText =
+                'Could not get a response. Please try again.';
+
+        } finally {
+
+            askButton.disabled = false;
+            askButton.innerText = 'Ask Docsense';
+
+        }
+    });
+
+    input.focus();
+}
+
+function escapeCustomHTML(value) {
+
+    const element = document.createElement('span');
+    element.textContent = String(value ?? '');
+
+    return element.innerHTML;
 }
 
 function openSearchAssistant() {
@@ -1341,6 +1497,28 @@ function injectHeadingButtons(sections) {
             }
         );
 
+
+        button.addEventListener('contextmenu', (event) => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const rect = button.getBoundingClientRect();
+
+            const combinedContent =
+                sectionData.heading +
+                '\n\n' +
+                sectionData.content.join('\n\n');
+
+            openCustomPromptDialog(
+                rect.right + 8,
+                rect.top,
+                sectionData.heading,
+                combinedContent
+            );
+
+        });
+
         headingElement.appendChild(button);
 
     });
@@ -1457,6 +1635,24 @@ function injectCodeButtons(codeBlocks) {
 
             }
         );
+
+
+        button.addEventListener('contextmenu', (event) => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const rect = button.getBoundingClientRect();
+
+            openCustomPromptDialog(
+                rect.right + 8,
+                rect.top,
+                'Code Explanation',
+                codeData.text
+            );
+
+        });
+
 
         wrapper.appendChild(button);
 
@@ -1850,7 +2046,7 @@ function initializeSelectionMode() {
 
             const oldButton =
                 document.querySelector(
-                    '.docsense-selection-explain'
+                    '.docsense-selection-actions'
                 );
 
             if (oldButton) {
@@ -1864,165 +2060,135 @@ function initializeSelectionMode() {
 
 }
 
+
 function showSelectionExplainButton() {
 
-    const oldButton =
-        document.querySelector(
-            '.docsense-selection-explain'
-        );
+    const oldActions =
+        document.querySelector('.docsense-selection-actions');
 
-    if (oldButton) {
-        oldButton.remove();
+    if (oldActions) {
+        oldActions.remove();
     }
 
-    const selection =
-        window.getSelection();
+    const selection = window.getSelection();
 
-    if (!selection.rangeCount) {
+    if (!selection || !selection.rangeCount) {
         return;
     }
 
     const rect =
-        selection
-            .getRangeAt(0)
-            .getBoundingClientRect();
+        selection.getRangeAt(0).getBoundingClientRect();
 
-    const button =
-        document.createElement('div');
+    const actions = document.createElement('div');
 
-    button.className =
-        'docsense-selection-explain';
+    actions.className = 'docsense-selection-actions';
 
-    button.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle
-                cx="11"
-                cy="11"
-                r="7"
-                stroke="currentColor"
-                stroke-width="2"
-            />
-            <path
-                d="M20 20L16.5 16.5"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-            />
-        </svg>
-        <span style="margin-left:8px">
-            Explain
-        </span>
+    actions.style.cssText = `
+        position:fixed;
+        left:${Math.max(8, Math.min(
+        rect.right + 10,
+        window.innerWidth - 220
+    ))}px;
+        top:${Math.max(8, rect.top - 10)}px;
+        z-index:999999;
+        display:flex;
+        align-items:center;
+        gap:6px;
+        padding:5px;
+        border-radius:999px;
+        background:#171717;
+        border:1px solid #444;
+        box-shadow:0 4px 16px rgba(0,0,0,.3);
     `;
 
-    button.style.position =
-        'fixed';
+    function createActionButton(label, custom = false) {
 
-    const left =
-        Math.min(
-            rect.right + 10,
-            window.innerWidth - 120
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.textContent = label;
+
+        button.style.cssText = `
+            border:0;
+            border-radius:999px;
+            padding:9px 13px;
+            background:${custom ? '#303030' : '#8b5cf6'};
+            color:white;
+            font:600 13px sans-serif;
+            cursor:pointer;
+            white-space:nowrap;
+        `;
+
+        return button;
+    }
+
+    const explainButton = createActionButton('Explain');
+    const customButton = createActionButton('Custom', true);
+
+    actions.append(explainButton, customButton);
+    document.body.appendChild(actions);
+
+    explainButton.addEventListener('click', async (event) => {
+
+        event.stopPropagation();
+
+        const textToExplain = selectedText;
+
+        actions.remove();
+
+        createAssistantPopup(
+            window.innerWidth - 450,
+            120,
+            'Selected Text'
         );
 
-    button.style.left =
-        `${left}px`;
+        const popup =
+            document.querySelector('.docsense-popup');
 
-    button.style.top =
-        `${rect.top - 10}px`;
+        const responseElement =
+            popup.querySelector('.docsense-response');
 
-    button.style.zIndex =
-        '999999';
+        responseElement.innerText = 'Thinking...';
 
-    button.style.padding =
-        '8px 12px';
+        try {
 
-    button.style.borderRadius =
-        '999px';
+            const prompt = buildSelectionPrompt(textToExplain);
+            const aiResponse = await askAI(prompt);
 
-    button.style.background =
-        '#8b5cf6';
+            if (!popup.isConnected) return;
 
-    button.style.color =
-        'white';
+            responseElement.innerHTML =
+                marked.parse(String(aiResponse));
 
-    button.style.cursor =
-        'pointer';
+        } catch (error) {
 
-    button.style.display =
-        'flex';
+            console.error(error);
 
-    button.style.alignItems =
-        'center';
-
-    button.style.justifyContent =
-        'center';
-
-    button.style.gap =
-        '8px';
-
-    button.style.whiteSpace =
-        'nowrap';
-
-    button.addEventListener(
-        'click',
-        async () => {
-
-            button.remove();
-
-            createAssistantPopup(
-                window.innerWidth - 450,
-                120,
-                'Selected Text'
-            );
-
-            const popup =
-                document.querySelector(
-                    '.docsense-popup'
-                );
-
-            const responseElement =
-                popup.querySelector(
-                    '.docsense-response'
-                );
-
-            responseElement.innerText =
-                'Thinking...';
-
-            try {
-
-                const prompt =
-                    buildSelectionPrompt(
-                        selectedText
-                    );
-
-                const aiResponse =
-                    await askAI(prompt);
-
-
-
-                responseElement.innerHTML =
-                    marked.parse(
-                        aiResponse
-                    );
-
-            }
-
-            catch (error) {
-
-                console.error(error);
-
+            if (popup.isConnected) {
                 responseElement.innerText =
                     'Failed to get AI response.';
-
             }
-
         }
-    );
+    });
 
-    document.body.appendChild(
-        button
-    );
+    customButton.addEventListener('click', (event) => {
 
+        event.stopPropagation();
+
+        const textForCustomPrompt = selectedText;
+        const rect = customButton.getBoundingClientRect();
+
+        actions.remove();
+
+        openCustomPromptDialog(
+            rect.left,
+            rect.bottom + 8,
+            'Selected Text',
+            textForCustomPrompt
+        );
+    });
 }
+
 
 document.addEventListener(
     'mousedown',
@@ -2030,7 +2196,7 @@ document.addEventListener(
 
         const explainButton =
             document.querySelector(
-                '.docsense-selection-explain'
+                '.docsense-selection-actions'
             );
 
         if (!explainButton) {
@@ -2063,7 +2229,7 @@ document.addEventListener(
 
         if (
             event.target.closest(
-                '.docsense-selection-explain'
+                '.docsense-selection-actions'
             )
         ) {
             return;
