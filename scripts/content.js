@@ -1,6 +1,5 @@
 
 let selectionMode = false;
-let selectedText = '';
 
 if (window.docsenseInjected) {
 } else {
@@ -2031,18 +2030,12 @@ function initializeSelectionMode() {
                 return;
             }
 
-            const text =
-                window.getSelection()
-                    .toString()
-                    .trim();
+            const selection = window.getSelection();
+            const text = selection?.toString() || '';
 
-            if (!text) {
+            if (!text.trim()) {
                 return;
             }
-
-            selectedText = text;
-
-
 
             const oldButton =
                 document.querySelector(
@@ -2053,7 +2046,7 @@ function initializeSelectionMode() {
                 oldButton.remove();
             }
 
-            showSelectionExplainButton();
+            showSelectionExplainButton(text);
 
         }
     );
@@ -2061,7 +2054,7 @@ function initializeSelectionMode() {
 }
 
 
-function showSelectionExplainButton() {
+function showSelectionExplainButton(selectionText) {
 
     const oldActions =
         document.querySelector('.docsense-selection-actions');
@@ -2071,8 +2064,9 @@ function showSelectionExplainButton() {
     }
 
     const selection = window.getSelection();
+    const textToUse = selectionText;
 
-    if (!selection || !selection.rangeCount) {
+    if (!textToUse.trim() || !selection?.rangeCount) {
         return;
     }
 
@@ -2082,6 +2076,9 @@ function showSelectionExplainButton() {
     const actions = document.createElement('div');
 
     actions.className = 'docsense-selection-actions';
+    actions.addEventListener('mousedown', (event) => {
+        event.stopPropagation();
+    });
 
     actions.style.cssText = `
         position:fixed;
@@ -2132,8 +2129,6 @@ function showSelectionExplainButton() {
 
         event.stopPropagation();
 
-        const textToExplain = selectedText;
-
         actions.remove();
 
         createAssistantPopup(
@@ -2152,7 +2147,7 @@ function showSelectionExplainButton() {
 
         try {
 
-            const prompt = buildSelectionPrompt(textToExplain);
+            const prompt = buildSelectionPrompt(textToUse);
             const aiResponse = await askAI(prompt);
 
             if (!popup.isConnected) return;
@@ -2162,11 +2157,11 @@ function showSelectionExplainButton() {
 
         } catch (error) {
 
-            console.error(error);
+            console.error('Docsense selection explanation error:', error);
 
             if (popup.isConnected) {
                 responseElement.innerText =
-                    'Failed to get AI response.';
+                    'Could not explain the selected text. Please try again.';
             }
         }
     });
@@ -2175,7 +2170,6 @@ function showSelectionExplainButton() {
 
         event.stopPropagation();
 
-        const textForCustomPrompt = selectedText;
         const rect = customButton.getBoundingClientRect();
 
         actions.remove();
@@ -2184,7 +2178,7 @@ function showSelectionExplainButton() {
             rect.left,
             rect.bottom + 8,
             'Selected Text',
-            textForCustomPrompt
+            textToUse
         );
     });
 }
