@@ -1,11 +1,12 @@
 
-let selectionMode = false;
+(() => {
+    if (window.docsenseInjected) {
+        return;
+    }
 
-if (window.docsenseInjected) {
-} else {
     window.docsenseInjected = true;
-    initializeDocsense();
-}
+
+    let selectionMode = false;
 
 function getArticleRoot() {
 
@@ -397,11 +398,9 @@ function styleInjectedButton(button) {
 
 function removeExistingPopup() {
 
-    const existingPopup = document.querySelector('.docsense-popup');
-
-    if (existingPopup) {
-        existingPopup.remove();
-    }
+    document
+        .querySelectorAll('.docsense-popup')
+        .forEach((popup) => popup.remove());
 
 }
 
@@ -680,9 +679,12 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
     `;
 
     popup.innerHTML = `
-        <div style="display:flex;justify-content:space-between;
-                    align-items:center;margin-bottom:12px">
-            <strong style="font-size:18px">Docsense AI</strong>
+        <div class="docsense-custom-header"
+             style="display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    margin-bottom:12px">
+            <div style="font-weight:700;font-size:18px">Docsense AI</div>
             <button type="button" class="docsense-custom-close"
                     aria-label="Close"
                     style="background:none;border:none;color:white;
@@ -717,6 +719,42 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
     `;
 
     document.body.appendChild(popup);
+
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    popup.addEventListener('mousedown', (event) => {
+
+        if (
+            event.target.closest(
+                '.docsense-custom-input, .docsense-custom-ask, ' +
+                '.docsense-custom-close, .docsense-custom-response'
+            )
+        ) {
+            return;
+        }
+
+        isDragging = true;
+
+        offsetX = event.clientX - popup.offsetLeft;
+        offsetY = event.clientY - popup.offsetTop;
+    });
+
+    document.addEventListener('mousemove', (event) => {
+
+        if (!isDragging) {
+            return;
+        }
+
+        popup.style.left = `${event.clientX - offsetX}px`;
+        popup.style.top = `${event.clientY - offsetY}px`;
+        popup.style.right = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
 
     const input = popup.querySelector('.docsense-custom-input');
     const askButton = popup.querySelector('.docsense-custom-ask');
@@ -2024,7 +2062,17 @@ function initializeSelectionMode() {
 
     document.addEventListener(
         'mouseup',
-        () => {
+        (event) => {
+
+            if (
+                event.composedPath().some(
+                    (target) =>
+                        target instanceof Element &&
+                        target.matches('.docsense-selection-actions')
+                )
+            ) {
+                return;
+            }
 
             if (!selectionMode) {
                 return;
@@ -2079,6 +2127,9 @@ function showSelectionExplainButton(selectionText) {
     actions.addEventListener('mousedown', (event) => {
         event.stopPropagation();
     });
+    actions.addEventListener('mouseup', (event) => {
+        event.stopPropagation();
+    });
 
     actions.style.cssText = `
         position:fixed;
@@ -2087,7 +2138,7 @@ function showSelectionExplainButton(selectionText) {
         window.innerWidth - 220
     ))}px;
         top:${Math.max(8, rect.top - 10)}px;
-        z-index:999999;
+        z-index:2147483647;
         display:flex;
         align-items:center;
         gap:6px;
@@ -2097,6 +2148,7 @@ function showSelectionExplainButton(selectionText) {
         border:1px solid #444;
         box-shadow:0 4px 16px rgba(0,0,0,.3);
     `;
+    actions.style.setProperty('pointer-events', 'auto', 'important');
 
     function createActionButton(label, custom = false) {
 
@@ -2115,12 +2167,13 @@ function showSelectionExplainButton(selectionText) {
             cursor:pointer;
             white-space:nowrap;
         `;
+        button.style.setProperty('pointer-events', 'auto', 'important');
 
         return button;
     }
 
     const explainButton = createActionButton('Explain');
-    const customButton = createActionButton('Custom', true);
+    const customButton = createActionButton('Ask', true);
 
     actions.append(explainButton, customButton);
     document.body.appendChild(actions);
@@ -2188,21 +2241,22 @@ document.addEventListener(
     'mousedown',
     (event) => {
 
-        const explainButton =
-            document.querySelector(
-                '.docsense-selection-actions'
+        const cameFromSelectionActions =
+            event.composedPath().some(
+                (target) =>
+                    target instanceof Element &&
+                    target.matches('.docsense-selection-actions')
             );
 
-        if (!explainButton) {
+        if (cameFromSelectionActions) {
             return;
         }
 
-        if (
-            !explainButton.contains(
-                event.target
-            )
-        ) {
-            explainButton.remove();
+        const actions =
+            document.querySelector('.docsense-selection-actions');
+
+        if (actions) {
+            actions.remove();
         }
 
     }
@@ -2221,11 +2275,14 @@ document.addEventListener(
             return;
         }
 
-        if (
-            event.target.closest(
-                '.docsense-selection-actions'
-            )
-        ) {
+        const cameFromSelectionActions =
+            event.composedPath().some(
+                (target) =>
+                    target instanceof Element &&
+                    target.matches('.docsense-selection-actions')
+            );
+
+        if (cameFromSelectionActions) {
             return;
         }
 
@@ -2259,3 +2316,6 @@ function initializeDocsense() {
     }
 
 }
+
+initializeDocsense();
+})();
