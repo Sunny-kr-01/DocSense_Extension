@@ -699,19 +699,27 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
             Context: ${escapeCustomHTML(contextTitle)}
         </div>
 
-        <textarea class="docsense-custom-input"
-            placeholder="What would you like Docsense AI to do?"
-            style="width:100%;min-height:100px;box-sizing:border-box;
-                   padding:12px;border:1px solid #444;border-radius:10px;
-                   background:#111;color:white;resize:vertical;
-                   font:inherit"></textarea>
+        <div class="docsense-prompt-row"
+             style="display:flex;align-items:flex-end;gap:10px;margin-top:4px">
 
-        <button type="button" class="docsense-custom-ask"
-            style="width:100%;margin-top:10px;padding:12px;border:0;
-                   border-radius:10px;background:#8b5cf6;color:white;
-                   font-weight:600;font-size:14px;cursor:pointer">
-            Ask Docsense
-        </button>
+            <textarea class="docsense-custom-input"
+                placeholder="Ask a follow-up question..."
+                rows="1"
+                style="flex:1;width:0;min-width:0;height:44px;min-height:44px;
+                       max-height:140px;box-sizing:border-box;padding:11px 12px;
+                       border:1px solid #444;border-radius:12px;
+                       background:#111;color:white;resize:none;
+                       overflow-y:hidden;font:inherit;line-height:1.5"></textarea>
+
+            <button type="button" class="docsense-custom-ask"
+                style="flex-shrink:0;height:44px;padding:0 16px;
+                       border:0;border-radius:12px;background:#8b5cf6;
+                       color:white;font-weight:600;font-size:14px;
+                       cursor:pointer;white-space:nowrap">
+                Ask Docsense
+            </button>
+
+        </div>
 
         <div class="docsense-custom-response"
              style="margin-top:14px;max-height:300px;overflow-y:auto;
@@ -765,6 +773,21 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
     });
 
     const input = popup.querySelector('.docsense-custom-input');
+
+    function resizeCustomInput() {
+        input.style.height = '44px';
+
+        const maxHeight = 140;
+        const nextHeight = Math.min(input.scrollHeight, maxHeight);
+
+        input.style.height = `${nextHeight}px`;
+
+        input.style.overflowY =
+            input.scrollHeight > maxHeight ? 'auto' : 'hidden';
+    }
+
+    input.addEventListener('input', resizeCustomInput);
+
     const askButton = popup.querySelector('.docsense-custom-ask');
     const responseElement =
         popup.querySelector('.docsense-custom-response');
@@ -838,11 +861,22 @@ ${contextContent}
 User's custom instruction:
 ${instruction}
 
-Follow the user's instruction using the supplied context when relevant.
+Follow the user's instruction directly. Start with the answer, not a greeting,
+introduction, or announcement about being an AI assistant.
+
+Avoid generic openings such as "Hello!", "Hi!", or "I am Docsense AI".
+Do not repeat the user's question unnecessarily.
+
+Use clear, readable Markdown with appropriate headings, lists, code blocks,
+and tables when useful.
+
+If a brief contextual note or limitation is genuinely useful, include it
+at the end. Do not add unnecessary closing remarks or invitations for
+further questions.
+
 If the user asks about a related topic outside the supplied context,
-you may use general knowledge and clearly distinguish it from the page content.
-Do not claim that information appears on the page if it does not.
-Use clear, readable Markdown.
+you may use general knowledge and clearly distinguish it from page content.
+Never claim that information appears on the page if it does not.
 `;
 
         try {
@@ -1044,9 +1078,19 @@ ${content}
 
 Response Format:
 
+IMPORTANT OPENING RULES:
+- Start immediately with the explanation of the topic.
+- Never begin with a greeting such as "Hello" or "Hi".
+- Never introduce yourself as Docsense AI.
+- Never announce that you are about to explain or summarize the section.
+- Do not write phrases like "Here is the overview" or "Let's explore".
+- The first sentence must contain useful information about the topic.
+
 Give a very short overview in 1-2 sentences describing what this section is about.
 
-Full Explanation
+Then provide:
+
+## Full Explanation
 
 Requirements:
 - Explain in beginner-friendly language.
@@ -1076,6 +1120,14 @@ Code:
 ${code}
 
 Response Format:
+
+IMPORTANT OPENING RULES:
+- Start directly by explaining what the code does.
+- Never greet the user or introduce yourself as Docsense AI.
+- Do not announce that you are about to explain the code.
+- Avoid generic openings such as "Hello", "Here is the explanation",
+  or "Let's break this down".
+- The first sentence must explain the code's purpose.
 
 Start with a very short explanation in 1-2 sentences describing what the code does.
 
@@ -1124,6 +1176,13 @@ Selected Content:
 ${text}
 
 Response Format:
+
+IMPORTANT OPENING RULES:
+- Begin directly with the selected content's meaning.
+- Never greet the user or introduce yourself as Docsense AI.
+- Do not announce that you are going to explain the content.
+- Avoid generic openings such as "Hello" or "Here is an overview".
+- Start with useful information about the selected content.
 
 Start with a short 1-2 sentence overview describing what the selected content is about.
 
