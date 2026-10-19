@@ -716,6 +716,13 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
         <div class="docsense-custom-response"
              style="margin-top:14px;max-height:300px;overflow-y:auto;
                     overflow-wrap:anywhere"></div>
+
+        <button type="button" class="docsense-custom-expand"
+            style="width:100%;margin-top:12px;padding:12px;border:0;
+                   border-radius:10px;background:#8b5cf6;color:white;
+                   font-weight:600;font-size:14px;cursor:pointer">
+            Expand
+        </button>
     `;
 
     document.body.appendChild(popup);
@@ -729,7 +736,8 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
         if (
             event.target.closest(
                 '.docsense-custom-input, .docsense-custom-ask, ' +
-                '.docsense-custom-close, .docsense-custom-response'
+                '.docsense-custom-close, .docsense-custom-response, ' +
+                '.docsense-custom-expand'
             )
         ) {
             return;
@@ -760,6 +768,32 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
     const askButton = popup.querySelector('.docsense-custom-ask');
     const responseElement =
         popup.querySelector('.docsense-custom-response');
+    const expandButton =
+        popup.querySelector('.docsense-custom-expand');
+
+    expandButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        popup.style.width = '620px';
+        popup.style.maxWidth = '95vw';
+        popup.style.height = '75vh';
+        popup.style.maxHeight = '80vh';
+
+        responseElement.style.maxHeight = '60vh';
+
+        expandButton.style.display = 'none';
+
+        // Keep the enlarged popup inside the viewport.
+        const rect = popup.getBoundingClientRect();
+
+        if (rect.right > window.innerWidth) {
+            popup.style.left = `${Math.max(12, window.innerWidth - rect.width - 12)}px`;
+        }
+
+        if (rect.bottom > window.innerHeight) {
+            popup.style.top = `${Math.max(12, window.innerHeight - rect.height - 12)}px`;
+        }
+    });
 
     popup.querySelector('.docsense-custom-close')
         .addEventListener('click', (event) => {
