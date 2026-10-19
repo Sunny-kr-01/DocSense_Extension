@@ -2297,7 +2297,177 @@ document.addEventListener(
     }
 );
 
+function addDocsenseResponseStyles() {
+
+    if (document.getElementById('docsense-response-styles')) {
+        return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'docsense-response-styles';
+
+    style.textContent = `
+        .docsense-response,
+        .docsense-custom-response {
+            font-family: -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #e5e7eb;
+            overflow-wrap: anywhere;
+        }
+
+        .docsense-response h1,
+        .docsense-response h2,
+        .docsense-response h3,
+        .docsense-custom-response h1,
+        .docsense-custom-response h2,
+        .docsense-custom-response h3 {
+            color: #ffffff;
+            line-height: 1.35;
+            font-weight: 650;
+            margin: 20px 0 10px;
+        }
+
+        .docsense-response h1,
+        .docsense-custom-response h1 {
+            font-size: 21px;
+        }
+
+        .docsense-response h2,
+        .docsense-custom-response h2 {
+            font-size: 18px;
+        }
+
+        .docsense-response h3,
+        .docsense-custom-response h3 {
+            font-size: 15px;
+        }
+
+        .docsense-response h1:first-child,
+        .docsense-response h2:first-child,
+        .docsense-response h3:first-child,
+        .docsense-custom-response h1:first-child,
+        .docsense-custom-response h2:first-child,
+        .docsense-custom-response h3:first-child {
+            margin-top: 0;
+        }
+
+        .docsense-response p,
+        .docsense-custom-response p {
+            margin: 0 0 12px;
+        }
+
+        .docsense-response ul,
+        .docsense-response ol,
+        .docsense-custom-response ul,
+        .docsense-custom-response ol {
+            padding-left: 24px;
+            margin: 8px 0 16px;
+        }
+
+        .docsense-response li,
+        .docsense-custom-response li {
+            margin-bottom: 6px;
+        }
+
+        .docsense-response strong,
+        .docsense-custom-response strong {
+            color: #ffffff;
+            font-weight: 650;
+        }
+
+        .docsense-response pre,
+        .docsense-custom-response pre {
+            overflow-x: auto;
+            max-width: 100%;
+            box-sizing: border-box;
+            padding: 14px;
+            margin: 12px 0 16px;
+            border: 1px solid #374151;
+            border-radius: 10px;
+            background: #0b0f19;
+            line-height: 1.6;
+        }
+
+        .docsense-response pre code,
+        .docsense-custom-response pre code {
+            padding: 0;
+            background: transparent;
+            color: #e5e7eb;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 13px;
+        }
+
+        .docsense-response :not(pre) > code,
+        .docsense-custom-response :not(pre) > code {
+            padding: 2px 5px;
+            border-radius: 4px;
+            background: #30303a;
+            color: #c4b5fd;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.9em;
+        }
+
+        .docsense-response blockquote,
+        .docsense-custom-response blockquote {
+            margin: 12px 0;
+            padding: 10px 14px;
+            border-left: 3px solid #8b5cf6;
+            border-radius: 4px;
+            background: #20202a;
+        }
+
+        .docsense-response blockquote p,
+        .docsense-custom-response blockquote p {
+            margin-bottom: 0;
+        }
+
+        .docsense-response table,
+        .docsense-custom-response table {
+            display: block;
+            max-width: 100%;
+            overflow-x: auto;
+            border-collapse: collapse;
+            margin: 12px 0 16px;
+        }
+
+        .docsense-response th,
+        .docsense-response td,
+        .docsense-custom-response th,
+        .docsense-custom-response td {
+            padding: 8px 10px;
+            border: 1px solid #374151;
+            text-align: left;
+        }
+
+        .docsense-response th,
+        .docsense-custom-response th {
+            background: #27272a;
+            color: #ffffff;
+        }
+
+        .docsense-response hr,
+        .docsense-custom-response hr {
+            border: 0;
+            border-top: 1px solid #383838;
+            margin: 18px 0;
+        }
+
+        .docsense-response a,
+        .docsense-custom-response a {
+            color: #c4b5fd;
+            text-decoration: underline;
+            overflow-wrap: anywhere;
+        }
+    `;
+
+    (document.head || document.documentElement).appendChild(style);
+}
+
 function initializeDocsense() {
+
+    addDocsenseResponseStyles();
 
     const extractedData = extractPageData();
 
