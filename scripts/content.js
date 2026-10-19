@@ -331,6 +331,46 @@ function extractPageData() {
 
 }
 
+function addDocsenseTooltip(button) {
+    const tooltip = document.createElement('span');
+
+    tooltip.textContent =
+        'Click to explain · Right-click to ask anything';
+
+    tooltip.style.cssText = `
+        position: fixed;
+        display: none;
+        padding: 7px 10px;
+        background: #1c1c1c;
+        color: white;
+        border: 1px solid #444;
+        border-radius: 8px;
+        font: 12px/1.4 sans-serif;
+        white-space: nowrap;
+        z-index: 2147483647;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    `;
+
+    document.body.appendChild(tooltip);
+
+    button.addEventListener('mouseenter', () => {
+        const rect = button.getBoundingClientRect();
+
+        tooltip.style.left = `${Math.min(
+            rect.left,
+            window.innerWidth - tooltip.offsetWidth - 12
+        )}px`;
+
+        tooltip.style.top = `${rect.bottom + 6}px`;
+        tooltip.style.display = 'block';
+    });
+
+    button.addEventListener('mouseleave', () => {
+        tooltip.style.display = 'none';
+    });
+}
+
 function styleInjectedButton(button) {
 
     button.src = chrome.runtime.getURL('images/logo.png');
@@ -393,6 +433,8 @@ function styleInjectedButton(button) {
         button.style.opacity = '0.88';
 
     });
+
+    addDocsenseTooltip(button);
 
 }
 
