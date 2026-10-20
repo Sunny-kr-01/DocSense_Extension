@@ -1046,13 +1046,16 @@ function openSearchAssistant() {
         </button>
 
         <div
-            class="docsense-search-response"
+            class="docsense-search-response docsense-custom-response"
             style="
                 margin-top:16px;
-                max-height:300px;
+                max-height:55vh;
                 overflow-y:auto;
-                line-height:1.6;
-                opacity:0.9;
+                overflow-x:hidden;
+                line-height:1.7;
+                opacity:1;
+                padding-right:6px;
+                overflow-wrap:anywhere;
             "
         ></div>
     `;
@@ -1411,46 +1414,85 @@ ${section.content
         ).join('\n\n');
 
     const prompt = `
-You are Docsense AI.
+You are DocSenseAI, a documentation learning and implementation assistant.
 
-Current page:
+CURRENT PAGE:
 ${data.url}
 
-Page title:
+PAGE TITLE:
 ${data.title}
 
-User question:
+USER QUESTION:
 ${userQuery}
 
-Relevant documentation sections:
+RELEVANT DOCUMENTATION SECTIONS:
 ${formattedSections}
 
-Your task:
+Your goal is to help the user LEARN from the documentation and then
+apply that knowledge to solve their problem.
 
-- Answer the user's question using information from the current page.
-- Act like a documentation mentor, not a search engine.
-- Guide the user toward achieving their goal.
-- Explain which sections they should read and in what order.
-- Suggest practical next steps when appropriate.
-- If code examples exist on the page, mention which section contains them.
-- If the page only partially answers the question, explain what is missing.
-- Keep the response concise, readable, and actionable.
-- Use short paragraphs or bullet points.
-- Never invent section names.
-- Only use section titles from the provided sections.
+Write the response in these three parts, in this exact order.
 
-Response Format:
+## 1. Learn the Relevant Sections
 
-[answer]
+Identify the documentation sections that help the user understand
+the concepts needed to solve their problem.
 
-SECTION: [exact section title]
-SECTION: [exact section title]
+For each section:
+- Give its exact title from the supplied documentation.
+- Explain what the user should learn from it.
+- Explain why that knowledge matters for their specific goal.
 
-Rules:
-- Each SECTION must be on its own line.
-- Do not combine multiple sections into one SECTION line.
-- Return at most 3 SECTION lines.
-- If no section is relevant, do not return any SECTION line.
+Recommend sections based on relevance, not simply because they
+appear in the supplied extracts. Include only sections that genuinely
+help the user.
+
+## 2. How the Concepts Work Together
+
+Explain how the recommended sections connect to one another.
+Show how the concepts build toward the user's goal.
+
+Do not repeat the first section or jump straight into the full solution.
+
+## 3. Full Process — Complete Solution
+
+Now answer the user's original question with a complete, practical
+solution.
+
+- Give ordered implementation steps.
+- Include relevant, usable code examples when appropriate.
+- Explain where the code belongs and how it works.
+- Explain important configuration and common mistakes.
+- Make the solution consistent with the concepts discussed above.
+- If required information is missing from the supplied documentation,
+  clearly identify assumptions or additional knowledge being used.
+
+STYLE:
+- Start immediately with useful content; no greetings or self-introductions.
+- Use readable Markdown, short paragraphs, headings, lists, and code blocks.
+- Be specific and technically accurate.
+- Do not repeat information unnecessarily.
+- Adapt the depth to the complexity of the question.
+- If the question is very simple, keep the learning section brief.
+- If no relevant sections were found, say so honestly rather than inventing
+  section titles.
+- Never invent documentation section titles or claim that an unprovided
+  section supports a statement.
+
+RELEVANT SECTION NAVIGATION:
+
+For every recommended documentation section:
+
+1. Explain what the user should learn from it.
+2. Explain why it helps with their goal.
+3. Immediately output SECTION: Exact Section Title on its own line.
+
+Do not collect all SECTION lines at the end.
+Place each marker directly after its recommendation.
+Do not put SECTION markers inside code blocks.
+Do not add SECTION markers to the final solution.
+Use only exact section titles supplied in the documentation context.
+Return at most 3 SECTION markers.
 `;
 
     const response =
@@ -1463,115 +1505,121 @@ Rules:
 }
 
 function formatSearchResponse(text) {
+    const lines = String(text ?? '').split(/\r?\n/);
+    const container = document.createElement('div');
 
-    const lines =
-        text.split('\n');
+    let markdownBuffer = '';
 
-    let html = '';
+    const sections = window.docsenseData?.sections || [];
+    const addedTitles = new Set();
 
-    lines.forEach((line) => {
-
-        if (
-            line.startsWith('SECTION:')
-        ) {
-
-            const sectionTitle =
-                line.replace(
-                    'SECTION:',
-                    ''
-                ).trim();
-
-            html += `
-                <button
-                    class="docsense-jump-btn"
-                    data-section="${sectionTitle}"
-                    style="
-                        width:100%;
-                        margin-top:10px;
-                        padding:10px;
-                        border:none;
-                        border-radius:10px;
-                        background:#27272a;
-                        color:white;
-                        cursor:pointer;
-                    "
-                >
-                    Go to ${sectionTitle}
-                </button>
-            `;
-
+    function flushMarkdown() {
+        if (!markdownBuffer.trim()) {
+            markdownBuffer = '';
+            return;
         }
 
-        else {
+        const content = document.createElement('div');
+        content.innerHTML = marked.parse(markdownBuffer);
+        container.appendChild(content);
+        markdownBuffer = '';
+    }
 
-            html += `
-                <div style="
-                    margin-bottom:8px;
-                ">
-                    ${line}
-                </div>
-            `;
+    function addSectionButton(rawTitle) {
+        const title = rawTitle
+            .replace(/\*\*/g, '')
+            .replace(/`/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
 
+        if (!title || /^\[.*\]$/.test(title)) return;
+
+        const normalizedTitle = title.toLowerCase();
+
+        if (addedTitles.has(normalizedTitle)) return;
+
+        const normalize = value =>
+            String(value ?? '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+
+        const section = sections.find(
+            item => normalize(item.heading) === normalizedTitle
+        );
+
+        // Never display a navigation button for a nonexistent heading.
+        if (!section?.element) return;
+
+        addedTitles.add(normalizedTitle);
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'docsense-jump-btn';
+        button.textContent = `Go to ${section.heading}`;
+        button.dataset.section = section.heading;
+
+        button.style.cssText = `
+            width:100%;
+            margin-top:10px;
+            padding:10px;
+            border:none;
+            border-radius:10px;
+            background:#27272a;
+            color:white;
+            cursor:pointer;
+        `;
+
+        container.appendChild(button);
+    }
+
+    for (const line of lines) {
+        const match = line.match(
+            /^\s*(?:[-*]\s*)?(?:\*\*)?SECTION\s*:\s*(.+?)(?:\*\*)?\s*$/i
+        );
+
+        if (match) {
+            // Render the explanation before inserting its navigation button.
+            flushMarkdown();
+            addSectionButton(match[1]);
+        } else {
+            markdownBuffer += line + '\n';
         }
+    }
 
-    });
+    flushMarkdown();
 
     setTimeout(() => {
-
         document
-            .querySelectorAll(
-                '.docsense-jump-btn'
-            )
-            .forEach((button) => {
+            .querySelectorAll('.docsense-jump-btn')
+            .forEach(button => {
+                button.addEventListener('click', () => {
+                    const title = button.dataset.section
+                        .toLowerCase()
+                        .trim();
 
-                button.addEventListener(
-                    'click',
-                    () => {
+                    const exactMatch = window.docsenseData.sections.find(
+                        s => s.heading.toLowerCase().trim() === title
+                    );
 
-                        const title =
-                            button.dataset.section
-                                .toLowerCase()
-                                .trim();
+                    const partialMatch = window.docsenseData.sections.find(
+                        s => s.heading.toLowerCase().trim().includes(title)
+                    );
 
-                        const exactMatch =
-                            window.docsenseData.sections.find(
-                                s =>
-                                    s.heading
-                                        .toLowerCase()
-                                        .trim() === title
-                            );
+                    const section = exactMatch || partialMatch;
 
-                        const partialMatch =
-                            window.docsenseData.sections.find(
-                                s =>
-                                    s.heading
-                                        .toLowerCase()
-                                        .trim()
-                                        .includes(title)
-                            );
-
-                        const section =
-                            exactMatch || partialMatch;
-
-                        if (
-                            section?.element
-                        ) {
-
-                            section.element.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'center'
-                            });
-
-                        }
-
+                    if (section?.element) {
+                        section.element.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
                     }
-                );
-
+                });
             });
-
     }, 0);
 
-    return html;
+    // Return the rendered markup for the existing response container.
+    return container.innerHTML;
 
 }
 
@@ -2309,6 +2357,7 @@ function showSelectionExplainButton(selectionText) {
 
     const explainButton = createActionButton('Explain');
     const customButton = createActionButton('Ask', true);
+    customButton.title = 'Ask anything about your selected text';
 
     actions.append(explainButton, customButton);
     document.body.appendChild(actions);
