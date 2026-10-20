@@ -438,6 +438,94 @@ function styleInjectedButton(button) {
 
 }
 
+function addDocsenseMaximizeButton(popup) {
+
+    let previousStyles = null;
+    let isMaximized = false;
+
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.className = 'docsense-maximize-btn';
+    button.textContent = '⛶';
+    button.title = 'Maximize';
+    button.setAttribute('aria-label', 'Maximize popup');
+
+    button.style.cssText = `
+        position:absolute;
+        top:10px;
+        right:42px;
+        width:28px;
+        height:28px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:1px solid rgba(255,255,255,0.18);
+        border-radius:7px;
+        background:rgba(255,255,255,0.08);
+        color:white;
+        font-size:19px;
+        line-height:1;
+        cursor:pointer;
+        z-index:10;
+        padding:0;
+    `;
+
+    button.addEventListener('mousedown', (event) => {
+        event.stopPropagation();
+    });
+
+    button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!isMaximized) {
+
+            // Save the popup's exact current inline styles.
+            previousStyles = popup.style.cssText;
+
+            // Use the viewport as the reference while maximized.
+            popup.style.setProperty('position', 'fixed', 'important');
+            popup.style.setProperty('top', '7.5vh', 'important');
+            popup.style.setProperty('left', '7.5vw', 'important');
+            popup.style.setProperty('right', 'auto', 'important');
+            popup.style.setProperty('bottom', 'auto', 'important');
+            popup.style.setProperty('width', '85vw', 'important');
+            popup.style.setProperty('height', '85vh', 'important');
+            popup.style.setProperty('max-width', '85vw', 'important');
+            popup.style.setProperty('max-height', '85vh', 'important');
+            popup.style.setProperty('box-sizing', 'border-box', 'important');
+            popup.style.setProperty('overflow-y', 'auto', 'important');
+            popup.style.setProperty('overflow-x', 'hidden', 'important');
+            popup.style.setProperty('z-index', '2147483647', 'important');
+
+            isMaximized = true;
+
+            button.textContent = '⤢';
+            button.title = 'Restore previous size';
+            button.setAttribute('aria-label', 'Restore previous size');
+
+        } else {
+
+            // Restore the exact styles from before maximizing.
+            popup.style.cssText = previousStyles;
+
+            isMaximized = false;
+
+            button.textContent = '⛶';
+            button.title = 'Maximize';
+            button.setAttribute('aria-label', 'Maximize popup');
+        }
+    });
+
+    // Ensure the button is positioned relative to the popup.
+    if (getComputedStyle(popup).position === 'static') {
+        popup.style.position = 'relative';
+    }
+
+    popup.appendChild(button);
+}
+
 function removeExistingPopup() {
 
     document
@@ -630,6 +718,7 @@ function createAssistantPopup(x, y, headingText) {
         );
 
     document.body.appendChild(popup);
+    addDocsenseMaximizeButton(popup);
 
     let isDragging = false;
 
@@ -776,6 +865,7 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
     `;
 
     document.body.appendChild(popup);
+    addDocsenseMaximizeButton(popup);
 
     let isDragging = false;
     let offsetX = 0;
@@ -1104,6 +1194,7 @@ function openSearchAssistant() {
 
 
     document.body.appendChild(popup);
+    addDocsenseMaximizeButton(popup);
 
 }
 
