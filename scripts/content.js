@@ -484,6 +484,33 @@ function addDocsenseMaximizeButton(popup) {
             // Save the popup's exact current inline styles.
             previousStyles = popup.style.cssText;
 
+            const expandButton = popup.querySelector(
+                '.docsense-expand-btn, .docsense-custom-expand'
+            );
+
+            const responseElement = popup.querySelector(
+                '.docsense-response, .docsense-custom-response'
+            );
+
+            // Save the button's original display value and response area's styles.
+            if (expandButton) {
+                button.dataset.expandDisplay = expandButton.style.display;
+                expandButton.style.display = 'none';
+            }
+
+            if (responseElement) {
+                responseElement.dataset.previousMaxHeight =
+                    responseElement.style.maxHeight;
+
+                responseElement.dataset.previousMarginBottom =
+                    responseElement.style.marginBottom;
+
+                responseElement.style.setProperty('max-height', 'none', 'important');
+                responseElement.style.setProperty('flex', '1', 'important');
+                responseElement.style.setProperty('min-height', '0', 'important');
+                responseElement.style.setProperty('margin-bottom', '0', 'important');
+            }
+
             // Use the viewport as the reference while maximized.
             popup.style.setProperty('position', 'fixed', 'important');
             popup.style.setProperty('top', '7.5vh', 'important');
@@ -501,7 +528,15 @@ function addDocsenseMaximizeButton(popup) {
 
             isMaximized = true;
 
-            button.textContent = '⤢';
+            button.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2.5" y="2.5" width="19" height="19" rx="3"/>
+                    <path d="M7 7L13 13"/>
+                    <path d="M7 13H13V7"/>
+                </svg>
+            `;
             button.title = 'Restore previous size';
             button.setAttribute('aria-label', 'Restore previous size');
 
@@ -509,6 +544,30 @@ function addDocsenseMaximizeButton(popup) {
 
             // Restore the exact styles from before maximizing.
             popup.style.cssText = previousStyles;
+
+            const expandButton = popup.querySelector(
+                '.docsense-expand-btn, .docsense-custom-expand'
+            );
+
+            const responseElement = popup.querySelector(
+                '.docsense-response, .docsense-custom-response'
+            );
+
+            if (expandButton) {
+                expandButton.style.display =
+                    button.dataset.expandDisplay || '';
+            }
+
+            if (responseElement) {
+                responseElement.style.maxHeight =
+                    responseElement.dataset.previousMaxHeight || '';
+
+                responseElement.style.flex = '';
+                responseElement.style.minHeight = '';
+
+                responseElement.style.marginBottom =
+                    responseElement.dataset.previousMarginBottom || '';
+            }
 
             isMaximized = false;
 
@@ -619,9 +678,28 @@ function createAssistantPopup(x, y, headingText) {
             </div>
 
             <div class="docsense-close-btn" style="
+                position:absolute;
+                top:10px;
+                right:10px;
+                width:28px;
+                height:28px;
+                min-width:28px;
+                min-height:28px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                box-sizing:border-box;
+                flex-shrink:0;
+                padding:0;
+                margin:0;
+                border:none;
+                border-radius:0;
+                background:transparent;
+                color:white;
                 cursor:pointer;
                 opacity:0.7;
-                font-size:20px;
+                font-size:22px;
+                line-height:1;
             ">
                 ×
             </div>
@@ -817,9 +895,31 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
                     margin-bottom:12px">
             <div style="font-weight:700;font-size:18px">Docsense AI</div>
             <button type="button" class="docsense-custom-close"
-                    aria-label="Close"
-                    style="background:none;border:none;color:white;
-                           font-size:22px;cursor:pointer">×</button>
+                aria-label="Close"
+                style="
+                    position:absolute;
+                    top:10px;
+                    right:10px;
+                    width:28px;
+                    height:28px;
+                    min-width:28px;
+                    min-height:28px;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    box-sizing:border-box;
+                    padding:0;
+                    margin:0;
+                    border:none;
+                    border-radius:0;
+                    background:transparent;
+                    color:white;
+                    font-size:22px;
+                    font-weight:400;
+                    line-height:1;
+                    cursor:pointer;
+                    opacity:0.85;
+                ">×</button>
         </div>
 
         <div style="margin-bottom:10px;color:#c4b5fd">
@@ -1096,9 +1196,34 @@ function openSearchAssistant() {
             font-size:18px;
             font-weight:700;
             margin-bottom:14px;
+            padding-right:36px;
         ">
             Docsense AI
         </div>
+
+        <button type="button" class="docsense-search-close"
+            aria-label="Close"
+            style="
+                position:absolute;
+                top:10px;
+                right:10px;
+                width:28px;
+                height:28px;
+                min-width:28px;
+                min-height:28px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                box-sizing:border-box;
+                padding:0;
+                border:none;
+                background:transparent;
+                color:white;
+                font-size:22px;
+                line-height:1;
+                cursor:pointer;
+                opacity:0.85;
+            ">×</button>
 
         <textarea
             class="docsense-search-input"
@@ -1195,6 +1320,12 @@ function openSearchAssistant() {
 
     document.body.appendChild(popup);
     addDocsenseMaximizeButton(popup);
+    popup.querySelector('.docsense-search-close')
+        .addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            popup.remove();
+        });
 
 }
 
