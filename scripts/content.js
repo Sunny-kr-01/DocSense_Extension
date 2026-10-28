@@ -681,6 +681,85 @@ function removeExistingPopup() {
 
 }
 
+function enablePopupDragging(popup, ignoreSelector = '') {
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    function onMouseDown(event) {
+        if (event.button !== 0 || !(event.target instanceof Element)) {
+            return;
+        }
+
+        if (
+            event.target.closest(
+                '.docsense-response, .docsense-custom-response, ' +
+                '.docsense-search-response, .docsense-search-input, ' +
+                '.docsense-custom-input, button, textarea, input, a'
+            )
+        ) {
+            return;
+        }
+
+        if (
+            ignoreSelector &&
+            event.target.closest(ignoreSelector)
+        ) {
+            return;
+        }
+
+        if (window.getSelection()?.toString()) return;
+
+        const rect = popup.getBoundingClientRect();
+        isDragging = true;
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+
+        popup.style.position = 'fixed';
+        popup.style.left = `${rect.left}px`;
+        popup.style.top = `${rect.top}px`;
+        popup.style.right = 'auto';
+        popup.style.bottom = 'auto';
+
+        event.preventDefault();
+    }
+
+    function onMouseMove(event) {
+        if (!isDragging || !popup.isConnected) return;
+
+        const maxLeft = Math.max(0, window.innerWidth - popup.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - popup.offsetHeight);
+
+        popup.style.left =
+            `${Math.max(0, Math.min(event.clientX - offsetX, maxLeft))}px`;
+
+        popup.style.top =
+            `${Math.max(0, Math.min(event.clientY - offsetY, maxTop))}px`;
+    }
+
+    function onMouseUp() {
+        isDragging = false;
+    }
+
+    popup.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    const observer = new MutationObserver(() => {
+        if (!popup.isConnected) {
+            popup.removeEventListener('mousedown', onMouseDown);
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            observer.disconnect();
+        }
+    });
+
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+}
+
 function createAssistantPopup(x, y, headingText) {
 
     removeExistingPopup();
@@ -799,7 +878,7 @@ function createAssistantPopup(x, y, headingText) {
             font-weight:600;
             margin-bottom:10px;
         ">
-            ${headingText}
+            ${escapeCustomHTML(headingText)}
         </div>
 
         <div
@@ -886,65 +965,7 @@ function createAssistantPopup(x, y, headingText) {
     document.body.appendChild(popup);
     addDocsenseMaximizeButton(popup);
 
-    let isDragging = false;
-
-    let offsetX = 0;
-
-    let offsetY = 0;
-
-    popup.addEventListener(
-        'mousedown',
-        (event) => {
-
-            if (
-                event.target.closest(
-                    '.docsense-response'
-                )
-            ) {
-                return;
-            }
-
-            isDragging = true;
-
-            offsetX =
-                event.clientX -
-                popup.offsetLeft;
-
-            offsetY =
-                event.clientY -
-                popup.offsetTop;
-
-        }
-    );
-
-    document.addEventListener(
-        'mousemove',
-        (event) => {
-
-            if (!isDragging) {
-                return;
-            }
-
-            popup.style.left =
-                `${event.clientX - offsetX}px`;
-
-            popup.style.top =
-                `${event.clientY - offsetY}px`;
-
-            popup.style.right =
-                'auto';
-
-        }
-    );
-
-    document.addEventListener(
-        'mouseup',
-        () => {
-
-            isDragging = false;
-
-        }
-    );
+    enablePopupDragging(popup, '.docsense-close-btn');
 
 }
 
@@ -1055,42 +1076,10 @@ function openCustomPromptDialog(x, y, contextTitle, contextContent) {
     document.body.appendChild(popup);
     addDocsenseMaximizeButton(popup);
 
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    popup.addEventListener('mousedown', (event) => {
-
-        if (
-            event.target.closest(
-                '.docsense-custom-input, .docsense-custom-ask, ' +
-                '.docsense-custom-close, .docsense-custom-response, ' +
-                '.docsense-custom-expand'
-            )
-        ) {
-            return;
-        }
-
-        isDragging = true;
-
-        offsetX = event.clientX - popup.offsetLeft;
-        offsetY = event.clientY - popup.offsetTop;
-    });
-
-    document.addEventListener('mousemove', (event) => {
-
-        if (!isDragging) {
-            return;
-        }
-
-        popup.style.left = `${event.clientX - offsetX}px`;
-        popup.style.top = `${event.clientY - offsetY}px`;
-        popup.style.right = 'auto';
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
+    enablePopupDragging(
+        popup,
+        '.docsense-custom-close, .docsense-custom-ask, .docsense-custom-expand'
+    );
 
     const input = popup.querySelector('.docsense-custom-input');
 
@@ -1206,7 +1195,7 @@ Never claim that information appears on the page if it does not.
             if (!popup.isConnected) return;
 
             responseElement.innerHTML =
-                marked.parse(String(answer));
+                renderSafeMarkdown(String(answer));
 
         } catch (error) {
 
@@ -1232,6 +1221,84 @@ function escapeCustomHTML(value) {
     element.textContent = String(value ?? '');
 
     return element.innerHTML;
+}
+
+function renderSafeMarkdown(markdown) {
+    const parsedHTML = marked.parse(String(markdown ?? ''));
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(parsedHTML, 'text/html');
+
+    const allowedTags = new Set([
+        'P', 'BR', 'HR',
+        'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
+        'STRONG', 'B', 'EM', 'I', 'DEL',
+        'UL', 'OL', 'LI',
+        'BLOCKQUOTE', 'PRE', 'CODE',
+        'A', 'TABLE', 'THEAD', 'TBODY',
+        'TR', 'TH', 'TD',
+        'DIV', 'SPAN'
+    ]);
+
+    const allowedAttributes = new Set([
+        'href', 'title', 'class'
+    ]);
+
+    function cleanNode(node) {
+        for (const child of [...node.childNodes]) {
+            if (child.nodeType === Node.COMMENT_NODE) {
+                child.remove();
+                continue;
+            }
+
+            if (child.nodeType !== Node.ELEMENT_NODE) {
+                continue;
+            }
+
+            if (!allowedTags.has(child.tagName)) {
+                if ([
+                    'SCRIPT', 'STYLE', 'IFRAME', 'OBJECT',
+                    'EMBED', 'FORM', 'SVG', 'MATH',
+                    'VIDEO', 'AUDIO'
+                ].includes(child.tagName)) {
+                    child.remove();
+                } else {
+                    cleanNode(child);
+                    child.replaceWith(...child.childNodes);
+                }
+                continue;
+            }
+
+            for (const attr of [...child.attributes]) {
+                const name = attr.name.toLowerCase();
+
+                if (!allowedAttributes.has(name)) {
+                    child.removeAttribute(attr.name);
+                    continue;
+                }
+
+                if (name === 'href') {
+                    try {
+                        const url = new URL(
+                            attr.value,
+                            window.location.href
+                        );
+
+                        if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) {
+                            child.removeAttribute('href');
+                        }
+                    } catch {
+                        child.removeAttribute('href');
+                    }
+                }
+            }
+
+            cleanNode(child);
+        }
+    }
+
+    cleanNode(doc.body);
+
+    return doc.body.innerHTML;
 }
 
 function openSearchAssistant() {
@@ -1363,51 +1430,66 @@ function openSearchAssistant() {
         ></div>
     `;
 
-    popup
-        .querySelector(
-            '.docsense-search-btn'
-        )
-        .addEventListener(
-            'click',
-            async () => {
+    const askButton =
+        popup.querySelector('.docsense-search-btn');
 
-                const input =
-                    popup.querySelector(
-                        '.docsense-search-input'
-                    );
+    askButton.addEventListener(
+        'click',
+        async () => {
+            const input =
+                popup.querySelector(
+                    '.docsense-search-input'
+                );
 
-                const responseElement =
-                    popup.querySelector(
-                        '.docsense-search-response'
-                    );
+            const responseElement =
+                popup.querySelector(
+                    '.docsense-search-response'
+                );
 
-                const userQuery =
-                    input.value.trim();
+            const userQuery =
+                input.value.trim();
 
-                if (!userQuery) {
-                    return;
+            if (!userQuery) {
+                return;
+            }
+
+            responseElement.innerText = 'Thinking...';
+            askButton.disabled = true;
+            askButton.innerText = 'Searching...';
+
+            try {
+                const aiResponse = await askSearchAI(userQuery);
+
+                if (!popup.isConnected) return;
+
+                responseElement.innerHTML =
+                    formatSearchResponse(aiResponse);
+
+            } catch (error) {
+                console.error(
+                    'DocSenseAI Search Assistant error:',
+                    error
+                );
+
+                if (popup.isConnected) {
+                    responseElement.innerText =
+                        'Something went wrong while searching. Please try again.';
                 }
 
-                responseElement.innerHTML =
-                    'Thinking...';
-
-                const aiResponse =
-                    await askSearchAI(
-                        userQuery
-                    );
-
-                responseElement.innerHTML =
-                    formatSearchResponse(
-                        aiResponse
-                    );
-
+            } finally {
+                if (popup.isConnected) {
+                    askButton.disabled = false;
+                    askButton.innerText = 'Ask';
+                }
             }
-        );
+        }
+    );
 
 
 
     document.body.appendChild(popup);
     addDocsenseMaximizeButton(popup);
+    enablePopupDragging(popup, '.docsense-search-close');
     popup.querySelector('.docsense-search-close')
         .addEventListener('click', (event) => {
             event.preventDefault();
@@ -1830,7 +1912,7 @@ function formatSearchResponse(text) {
         }
 
         const content = document.createElement('div');
-        content.innerHTML = marked.parse(markdownBuffer);
+        content.innerHTML = renderSafeMarkdown(markdownBuffer);
         container.appendChild(content);
         markdownBuffer = '';
     }
@@ -2014,7 +2096,7 @@ function injectHeadingButtons(sections) {
 
 
                 responseElement.innerHTML =
-                    marked.parse(
+                    renderSafeMarkdown(
                         typeof aiResponse === 'string'
                             ? aiResponse
                             : JSON.stringify(
@@ -2153,7 +2235,7 @@ function injectCodeButtons(codeBlocks) {
 
 
                 responseElement.innerHTML =
-                    marked.parse(
+                    renderSafeMarkdown(
                         typeof aiResponse === 'string'
                             ? aiResponse
                             : JSON.stringify(
@@ -2700,7 +2782,7 @@ function showSelectionExplainButton(selectionText) {
             if (!popup.isConnected) return;
 
             responseElement.innerHTML =
-                marked.parse(String(aiResponse));
+                renderSafeMarkdown(String(aiResponse));
 
         } catch (error) {
 
