@@ -582,6 +582,94 @@ function addDocsenseMaximizeButton(popup) {
         popup.style.position = 'relative';
     }
 
+    // Pin button: prevents outside clicks from closing the popup.
+    const pinButton = document.createElement('button');
+
+    pinButton.type = 'button';
+    pinButton.className = 'docsense-pin-btn';
+    pinButton.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+            <path d="m16 3 5 5-4 1-4 4-1 4-3-3-3-3 4-1z"/>
+            <path d="m10 14-7 7"/>
+        </svg>
+    `;
+    pinButton.title = 'Pin popup';
+    pinButton.setAttribute('aria-label', 'Pin popup');
+
+    pinButton.style.cssText = `
+        position:absolute;
+        top:10px;
+        right:76px;
+        width:28px;
+        height:28px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:1px solid rgba(255,255,255,0.18);
+        border-radius:7px;
+        background:rgba(255,255,255,0.08);
+        color:white;
+        font-size:20px;
+        line-height:1;
+        cursor:pointer;
+        z-index:10;
+        padding:0;
+    `;
+
+    pinButton.addEventListener('mousedown', (event) => {
+        event.stopPropagation();
+    });
+
+    pinButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isPinned = popup.dataset.pinned === 'true';
+        const nextPinned = !isPinned;
+
+        popup.dataset.pinned = String(nextPinned);
+
+        pinButton.innerHTML = nextPinned
+            ? `<svg width="17" height="17" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true">
+                   <path d="m16 3 5 5-4 1-4 4-1 4-3-3-3-3 4-1z"/>
+                   <path d="m10 14-7 7"/>
+                   <path d="m4 4 16 16"/>
+               </svg>`
+            : `<svg width="17" height="17" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true">
+                   <path d="m16 3 5 5-4 1-4 4-1 4-3-3-3-3 4-1z"/>
+                   <path d="m10 14-7 7"/>
+               </svg>`;
+        pinButton.title = nextPinned ? 'Unpin popup' : 'Pin popup';
+        pinButton.setAttribute(
+            'aria-label',
+            nextPinned ? 'Unpin popup' : 'Pin popup'
+        );
+
+        pinButton.style.background = nextPinned
+            ? 'rgba(139,92,246,0.25)'
+            : 'rgba(255,255,255,0.08)';
+
+        pinButton.style.borderColor = nextPinned
+            ? 'rgba(139,92,246,0.9)'
+            : 'rgba(255,255,255,0.18)';
+
+        pinButton.style.color = nextPinned ? '#c4b5fd' : 'white';
+
+        pinButton.style.boxShadow = nextPinned
+            ? '0 0 12px rgba(139,92,246,0.35)'
+            : 'none';
+    });
+
+    popup.appendChild(pinButton);
     popup.appendChild(button);
 }
 
@@ -2138,7 +2226,7 @@ function injectFloatingSearchButton() {
 
     button.style.position = 'fixed';
 
-    button.style.top = '20px';
+    button.style.top = '70px';
 
     button.style.right = '20px';
 
@@ -2695,7 +2783,8 @@ document.addEventListener(
         if (
             !popup.contains(
                 event.target
-            )
+            ) &&
+            popup.dataset.pinned !== 'true'
         ) {
             popup.remove();
         }
