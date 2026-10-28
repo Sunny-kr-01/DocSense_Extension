@@ -1462,8 +1462,27 @@ function openSearchAssistant() {
 
                 if (!popup.isConnected) return;
 
-                responseElement.innerHTML =
-                    formatSearchResponse(aiResponse);
+                const errorMessages = [
+                    'No Gemini API key found.',
+                    'Failed to contact background service worker.',
+                    'Gemini API quota exceeded.',
+                    'Gemini is currently under heavy load.',
+                    'AI response parsing failed',
+                    'Unknown AI error'
+                ];
+
+                const isError =
+                    typeof aiResponse === 'string' &&
+                    errorMessages.some(message =>
+                        aiResponse.includes(message)
+                    );
+
+                if (isError) {
+                    responseElement.innerText = aiResponse;
+                } else {
+                    responseElement.innerHTML =
+                        formatSearchResponse(aiResponse);
+                }
 
             } catch (error) {
                 console.error(
@@ -2344,9 +2363,6 @@ function injectFloatingSearchButton() {
     button.style.color =
         '#8b5cf6';
 
-    button.style.boxShadow =
-        '0 0 10px rgba(139,92,246,0.18)';
-
     button.style.fontWeight =
         '600';
 
@@ -2383,12 +2399,6 @@ function injectFloatingSearchButton() {
 
     selectionButton.className =
         'docsense-selection-toggle';
-
-    selectionButton.innerHTML = `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
-</svg>
-`;
 
     selectionButton.style.position =
         'fixed';
@@ -2447,6 +2457,13 @@ function injectFloatingSearchButton() {
     selectionButton.style.fontFamily =
         'sans-serif';
 
+    const selectionIcon = `
+        <svg width="18" height="18" viewBox="0 0 24 24"
+             fill="currentColor" aria-hidden="true">
+            <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
+        </svg>
+    `;
+
     selectionButton.addEventListener(
         'click',
         (event) => {
@@ -2487,20 +2504,11 @@ function injectFloatingSearchButton() {
 
             }
 
-            selectionButton.innerHTML =
-                selectionMode
-                    ? `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
-</svg>
-`
-                    : `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
-</svg>
-`;
+            selectionButton.innerHTML = selectionIcon;
         }
     );
+
+    selectionButton.innerHTML = selectionIcon;
 
     document.body.appendChild(
         selectionButton
@@ -2510,24 +2518,12 @@ function injectFloatingSearchButton() {
         'mouseenter',
         () => {
 
-            selectionButton.innerHTML =
-                selectionMode
-                    ? `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
-</svg>
-<span style="margin-left:8px">
-    ON
-</span>
-`
-                    : `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
-</svg>
-<span style="margin-left:8px">
-    OFF
-</span>
-`;
+            selectionButton.innerHTML = `
+                ${selectionIcon}
+                <span style="margin-left:8px">
+                    ${selectionMode ? 'ON' : 'OFF'}
+                </span>
+            `;
 
             selectionButton.style.width =
                 '70px';
@@ -2539,18 +2535,7 @@ function injectFloatingSearchButton() {
         'mouseleave',
         () => {
 
-            selectionButton.innerHTML =
-                selectionMode
-                    ? `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
-</svg>
-`
-                    : `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4 2L18 14L11 15L14 22L11 23L8 16L4 18V2Z"/>
-</svg>
-`;
+            selectionButton.innerHTML = selectionIcon;
             selectionButton.style.width =
                 '40px';
 
