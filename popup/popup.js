@@ -223,3 +223,48 @@ activateButton.addEventListener(
 
     }
 );
+
+const cheatModeToggle =
+    document.getElementById('cheatModeToggle');
+
+function updateCheatModeButton(enabled) {
+    cheatModeToggle.classList.toggle('active', enabled);
+
+    cheatModeToggle.setAttribute(
+        'aria-pressed',
+        String(enabled)
+    );
+
+    cheatModeToggle.title = enabled
+        ? 'Disable Cheat Mode'
+        : 'Enable Cheat Mode';
+}
+
+chrome.storage.local.get(
+    ['docsenseCheatModeEnabled'],
+    (result) => {
+        updateCheatModeButton(
+            result.docsenseCheatModeEnabled === true
+        );
+    }
+);
+
+cheatModeToggle.addEventListener('click', () => {
+    chrome.storage.local.get(
+        ['docsenseCheatModeEnabled'],
+        (result) => {
+            const enabled =
+                result.docsenseCheatModeEnabled !== true;
+
+            chrome.storage.local.set(
+                { docsenseCheatModeEnabled: enabled },
+                () => {
+                    updateCheatModeButton(enabled);
+                    statusText.innerText = enabled
+                        ? 'Cheat Mode enabled'
+                        : 'Cheat Mode disabled';
+                }
+            );
+        }
+    );
+});

@@ -7,6 +7,24 @@
     window.docsenseInjected = true;
 
     let selectionMode = false;
+    let cheatModeEnabled = false;
+
+    chrome.storage.local.get(['docsenseCheatModeEnabled'], (result) => {
+        cheatModeEnabled = result.docsenseCheatModeEnabled === true;
+        applyCheatMode();
+    });
+
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (
+            areaName === 'local' &&
+            changes.docsenseCheatModeEnabled
+        ) {
+            cheatModeEnabled =
+                changes.docsenseCheatModeEnabled.newValue === true;
+
+            applyCheatMode();
+        }
+    });
 
 function getArticleRoot() {
 
@@ -2188,6 +2206,7 @@ function injectCodeButtons(codeBlocks) {
         const button =
             document.createElement('img');
 
+        button.classList.add('docsense-code-explain-button');
         styleInjectedButton(button);
 
         button.style.position = 'absolute';
@@ -3026,6 +3045,199 @@ function addDocsenseResponseStyles() {
 
     (document.head || document.documentElement).appendChild(style);
 }
+
+function applyCheatMode() {
+    let style = document.getElementById('docsense-cheat-mode-style');
+
+    if (!style) {
+        style = document.createElement('style');
+        style.id = 'docsense-cheat-mode-style';
+        (document.head || document.documentElement).appendChild(style);
+    }
+
+    style.textContent = cheatModeEnabled ? `
+        .docsense-heading-button,
+        .docsense-floating-search,
+        .docsense-selection-toggle,
+        .docsense-selection-actions,
+        .docsense-code-wrapper .docsense-code-explain-button {
+            display: none !important;
+        }
+    ` : '';
+
+    if (cheatModeEnabled) {
+        document.querySelectorAll(
+            '.docsense-selection-actions'
+        ).forEach(element => element.remove());
+    }
+}
+
+document.addEventListener('mouseup', (event) => {
+    if (!cheatModeEnabled) return;
+
+    // Ignore selections made inside DocSenseAI UI.
+    if (event.target instanceof Element &&
+        event.target.closest('#docsense-answer-dot, #docsense-inline-answer')) {
+        return;
+    }
+
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+
+    document.getElementById('docsense-answer-dot')?.remove();
+
+    if (!selectedText || !selection?.rangeCount) return;
+
+    const rect = selection.getRangeAt(0).getBoundingClientRect();
+
+    if (!rect.width && !rect.height) return;
+
+    // Create a small dot beside the selected text.
+    const dot = document.createElement('button');
+    dot.id = 'docsense-answer-dot';
+    dot.type = 'button';
+    dot.title = 'Get a concise AI response';
+    dot.setAttribute('aria-label', 'Get AI response');
+
+    dot.style.cssText = `
+        position: fixed;
+        left: ${Math.max(8, Math.min(rect.right + 6, window.innerWidth - 16))}px;
+        top: ${Math.max(8, Math.min(rect.top, window.innerHeight - 16))}px;
+        width: 8px;
+        height: 8px;
+        min-width: 8px;
+        min-height: 8px;
+        padding: 0;
+        margin: 0;
+        border: none;
+        border-radius: 50%;
+        background: #8b5cf6;
+        box-shadow: none;
+        outline: none;
+        appearance: none;
+        cursor: pointer;
+        z-index: 2147483647;
+    `;
+
+    document.body.appendChild(dot);
+
+    // Keep the selected text and position even after clicking the dot.
+    const textToExplain = selectedText;
+    const answerLeft = Math.max(12, window.innerWidth - 432);
+    const answerTop = 24;
+
+    dot.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    dot.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        dot.remove();
+        document.getElementById('docsense-inline-answer')?.remove();
+
+        const answer = document.createElement('div');
+        answer.id = 'docsense-inline-answer';
+
+        answer.style.cssText = `
+            position: fixed;
+            left: ${answerLeft}px;
+            top: ${answerTop}px;
+            width: max-content;
+            max-width: min(420px, calc(100vw - 24px));
+            max-height: 45vh;
+            overflow-y: auto;
+            z-index: 2147483647;
+            color: inherit;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            margin: 0;
+            font: 14px/1.6 sans-serif;
+            white-space: normal;
+        `;
+
+        answer.innerHTML = `
+            <span style="display:inline-flex;gap:4px;align-items:center">
+                <span class="docsense-dot">.</span>
+                <span class="docsense-dot">.</span>
+                <span class="docsense-dot">.</span>
+            </span>
+        `;
+
+        if (!document.getElementById('docsense-dot-style')) {
+            const style = document.createElement('style');
+            style.id = 'docsense-dot-style';
+            style.textContent = `
+                @keyframes docsense-dot-pulse {
+                    0%, 60%, 100% { opacity: .25; }
+                    30% { opacity: 1; }
+                }
+                .docsense-dot {
+                    font-size: 22px;
+                    animation: docsense-dot-pulse 1.2s infinite;
+                }
+                .docsense-dot:nth-child(2) { animation-delay: .2s; }
+                .docsense-dot:nth-child(3) { animation-delay: .4s; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(answer);
+
+        // Close only when clicking outside the answer.
+        const closeOnOutsideClick = (clickEvent) => {
+            if (
+                answer.isConnected &&
+                !answer.contains(clickEvent.target)
+            ) {
+                answer.remove();
+                document.removeEventListener(
+                    'click',
+                    closeOnOutsideClick,
+                    true
+                );
+            }
+        };
+
+        // Register after this click finishes.
+        setTimeout(() => {
+            if (answer.isConnected) {
+                document.addEventListener(
+                    'click',
+                    closeOnOutsideClick,
+                    true
+                );
+            }
+        }, 0);
+
+        const prompt = `
+Answer directly and concisely.
+Avoid introductions and unnecessary explanation.
+If an explanation is needed, keep it brief.
+
+Selected text:
+${textToExplain}
+`;
+
+        try {
+            const response = await askAI(prompt);
+
+            if (answer.isConnected) {
+                answer.innerHTML = renderSafeMarkdown(String(response));
+            }
+        } catch (error) {
+            console.error('[DocSenseAI] Request failed:', error);
+
+            if (answer.isConnected) {
+                answer.textContent = 'Could not get a response. Please try again.';
+            }
+        }
+    });
+});
 
 function initializeDocsense() {
 

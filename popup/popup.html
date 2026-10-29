@@ -79,13 +79,69 @@
         .status:empty {
             display: none;
         }
+
+        .popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .popup-header h2 {
+            margin: 0;
+        }
+
+        .mode-toggle {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            padding: 4px;
+            margin: 0;
+            border: 2px solid #4b5563;
+            border-radius: 50%;
+            background: #27272a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mode-toggle:hover {
+            background: #3f3f46;
+        }
+
+        .mode-toggle.active {
+            border-color: #a78bfa;
+            background: #4c1d95;
+        }
+
+        .mode-toggle img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
     </style>
 
 </head>
 
 <body>
 
-    <h2>Docsense AI</h2>
+    <div class="popup-header">
+        <h2>Docsense AI</h2>
+
+        <button
+            id="cheatModeToggle"
+            class="mode-toggle"
+            type="button"
+            title="Enable Cheat Mode"
+            aria-label="Toggle Cheat Mode"
+            aria-pressed="false"
+        >
+            <img
+                src="../images/Incognito.png"
+                alt=""
+            />
+        </button>
+    </div>
 
     <div class="subtitle">
 
