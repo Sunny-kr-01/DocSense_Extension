@@ -26,7 +26,10 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "images/*"
+        "images/*",
+        "libs/katex/*",
+        "libs/katex/contrib/*",
+        "libs/katex/fonts/*"
       ],
       "matches": [
         "<all_urls>"

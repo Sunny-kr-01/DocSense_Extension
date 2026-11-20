@@ -1,4 +1,4 @@
-﻿# DocsenseAI
+# DocsenseAI
 
 AI-powered documentation assistant for developers.
 
@@ -68,6 +68,7 @@ Enable selection mode and highlight any text to get an explanation.
 * Chrome Extension Manifest V3
 * Gemini API
 * Marked.js
+* KaTeX
 
 
 ## IMPORTANT

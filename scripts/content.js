@@ -1212,8 +1212,10 @@ Never claim that information appears on the page if it does not.
 
             if (!popup.isConnected) return;
 
-            responseElement.innerHTML =
-                renderSafeMarkdown(String(answer));
+            await displayDocsenseResponse(
+                responseElement,
+                String(answer)
+            );
 
         } catch (error) {
 
@@ -1275,7 +1277,7 @@ function renderSafeMarkdown(markdown) {
             if (!allowedTags.has(child.tagName)) {
                 if ([
                     'SCRIPT', 'STYLE', 'IFRAME', 'OBJECT',
-                    'EMBED', 'FORM', 'SVG', 'MATH',
+                    'EMBED', 'FORM', 'SVG',
                     'VIDEO', 'AUDIO'
                 ].includes(child.tagName)) {
                     child.remove();
@@ -1317,6 +1319,79 @@ function renderSafeMarkdown(markdown) {
     cleanNode(doc.body);
 
     return doc.body.innerHTML;
+}
+
+let katexStylesheetPromise;
+
+function loadKaTeX() {
+    if (!window.katex || !window.renderMathInElement) {
+        return Promise.reject(
+            new Error('KaTeX scripts are not loaded in the extension context.')
+        );
+    }
+
+    if (katexStylesheetPromise) {
+        return katexStylesheetPromise;
+    }
+
+    const existingStylesheet =
+        document.querySelector('#docsense-katex-css');
+
+    if (existingStylesheet?.sheet) {
+        katexStylesheetPromise = Promise.resolve();
+        return katexStylesheetPromise;
+    }
+
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = chrome.runtime.getURL('libs/katex/katex.min.css');
+    css.id = 'docsense-katex-css';
+
+    katexStylesheetPromise = new Promise((resolve, reject) => {
+        css.onload = resolve;
+        css.onerror = () => {
+            css.remove();
+            katexStylesheetPromise = undefined;
+            reject(new Error('Could not load the KaTeX stylesheet.'));
+        };
+
+        if (existingStylesheet) {
+            existingStylesheet.remove();
+        }
+
+        document.head.appendChild(css);
+    });
+
+    return katexStylesheetPromise;
+}
+
+async function renderDocsenseMath(element) {
+    try {
+        await loadKaTeX();
+
+        if (!element.isConnected) return;
+
+        renderMathInElement(element, {
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '\\[', right: '\\]', display: true },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false,
+            ignoredTags: [
+                'script', 'noscript', 'style',
+                'textarea', 'pre', 'code'
+            ]
+        });
+    } catch (error) {
+        console.error('[DocSenseAI] KaTeX loading error:', error);
+    }
+}
+
+async function displayDocsenseResponse(element, response) {
+    element.innerHTML = renderSafeMarkdown(String(response ?? ''));
+    await renderDocsenseMath(element);
 }
 
 function openSearchAssistant() {
@@ -1500,6 +1575,7 @@ function openSearchAssistant() {
                 } else {
                     responseElement.innerHTML =
                         formatSearchResponse(aiResponse);
+                    await renderDocsenseMath(responseElement);
                 }
 
             } catch (error) {
@@ -1641,39 +1717,30 @@ The full explanation should usually fit within 250-350 words.
 function buildSelectionPrompt(text) {
 
     return `
-You are Docsense AI, an expert documentation assistant.
+You are Docsense AI, an expert learning and documentation assistant.
 
 Current Page URL:
 ${window.location.href}
 
-Selected Content:
 ${text}
 
-Response Format:
+IMPORTANT CONTEXT RULES:
+- Use both the selected text and its surrounding context.
+- Treat the surrounding context as additional information needed to understand the selection.
+- Preserve all mathematical expressions, values, variables and symbols exactly as provided.
+- Never invent missing coordinates, values, equations or conditions.
+- If the supplied content is incomplete, clearly mention what information is missing.
+- Do not guess or reconstruct the original question.
 
-IMPORTANT OPENING RULES:
-- Begin directly with the selected content's meaning.
-- Never greet the user or introduce yourself as Docsense AI.
-- Do not announce that you are going to explain the content.
-- Avoid generic openings such as "Hello" or "Here is an overview".
-- Start with useful information about the selected content.
-
-Start with a short 1-2 sentence overview describing what the selected content is about.
-
-Then provide:
-
-## Full Explanation
-
-Requirements:
-- Explain in the clearest possible way.
-- Assume the reader is learning.
-- Use markdown headings and bullet points.
-- Make the response highly readable.
-- Expand technical concepts when needed.
-- Use examples when useful.
-- Avoid giant walls of text.
-- Keep explanations concise.
-- Optimize for quick reading inside a popup.
+RESPONSE FORMAT:
+- Begin directly with the explanation.
+- Do not greet the user or introduce yourself.
+- Use clear Markdown headings and bullet points.
+- Explain concepts in beginner-friendly language.
+- Use properly formatted LaTeX for mathematical expressions.
+- Use inline math with \\( ... \\).
+- Use display math with \\[ ... \\].
+- Keep the explanation concise and readable.
 `;
 
 }
@@ -2132,16 +2199,16 @@ function injectHeadingButtons(sections) {
 
 
 
-                responseElement.innerHTML =
-                    renderSafeMarkdown(
-                        typeof aiResponse === 'string'
-                            ? aiResponse
-                            : JSON.stringify(
-                                aiResponse,
-                                null,
-                                2
-                            )
-                    );
+                await displayDocsenseResponse(
+                    responseElement,
+                    typeof aiResponse === 'string'
+                        ? aiResponse
+                        : JSON.stringify(
+                            aiResponse,
+                            null,
+                            2
+                        )
+                );
 
             }
         );
@@ -2272,16 +2339,16 @@ function injectCodeButtons(codeBlocks) {
 
 
 
-                responseElement.innerHTML =
-                    renderSafeMarkdown(
-                        typeof aiResponse === 'string'
-                            ? aiResponse
-                            : JSON.stringify(
-                                aiResponse,
-                                null,
-                                2
-                            )
-                    );
+                await displayDocsenseResponse(
+                    responseElement,
+                    typeof aiResponse === 'string'
+                        ? aiResponse
+                        : JSON.stringify(
+                            aiResponse,
+                            null,
+                            2
+                        )
+                );
 
             }
         );
@@ -2637,6 +2704,64 @@ function injectFloatingSearchButton() {
 
 }
 
+function getSelectionContext(selection) {
+    if (!selection || !selection.rangeCount) {
+        return '';
+    }
+
+    const selectedText = selection.toString().trim();
+
+    if (!selectedText) return '';
+
+    const range = selection.getRangeAt(0);
+    let element = range.commonAncestorContainer;
+
+    if (element.nodeType === Node.TEXT_NODE) {
+        element = element.parentElement;
+    }
+
+    if (!(element instanceof Element)) {
+        return selectedText;
+    }
+
+    const container = element.closest([
+        '[role="listitem"]',
+        '[role="group"]',
+        '.question',
+        '.quiz-question',
+        '.question-container',
+        'article',
+        'section',
+        'li',
+        'td'
+    ].join(','));
+
+    let contextElement = container || element;
+
+    while (
+        contextElement.parentElement &&
+        contextElement.innerText.length < 250 &&
+        contextElement.parentElement !== document.body
+    ) {
+        contextElement = contextElement.parentElement;
+    }
+
+    const surroundingText = contextElement.innerText
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    const maxLength = 6000;
+    const context = surroundingText.slice(0, maxLength);
+
+    return `
+Selected text:
+${selectedText}
+
+Surrounding question and context:
+${context}
+`;
+}
+
 function initializeSelectionMode() {
 
     document.addEventListener(
@@ -2658,7 +2783,7 @@ function initializeSelectionMode() {
             }
 
             const selection = window.getSelection();
-            const text = selection?.toString() || '';
+            const text = getSelectionContext(selection);
 
             if (!text.trim()) {
                 return;
@@ -2785,8 +2910,10 @@ function showSelectionExplainButton(selectionText) {
 
             if (!popup.isConnected) return;
 
-            responseElement.innerHTML =
-                renderSafeMarkdown(String(aiResponse));
+            await displayDocsenseResponse(
+                responseElement,
+                String(aiResponse)
+            );
 
         } catch (error) {
 
@@ -3082,7 +3209,7 @@ document.addEventListener('mouseup', (event) => {
     }
 
     const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
+    const selectedText = getSelectionContext(selection);
 
     document.getElementById('docsense-answer-dot')?.remove();
 
@@ -3215,11 +3342,24 @@ document.addEventListener('mouseup', (event) => {
         }, 0);
 
         const prompt = `
-Answer directly and concisely.
-Avoid introductions and unnecessary explanation.
-If an explanation is needed, keep it brief.
+You are DocSenseAI, an accurate academic problem-solving assistant.
 
-Selected text:
+Solve the question carefully and verify your answer before responding.
+
+Instructions:
+- For multiple-choice questions, identify the correct option.
+- For numerical questions, calculate and verify the final result.
+- Do not guess or assume missing information.
+- If the question is incomplete or ambiguous, say so.
+
+STRICT RESPONSE FORMAT:
+- Output ONLY the final answer.
+- For MCQs, provide the option letter and its corresponding answer.
+- For other questions, provide only the final value or result.
+- Do not include steps, calculations, explanations, introductions or conclusions.
+- Keep the response as short as possible.
+
+Question:
 ${textToExplain}
 `;
 
@@ -3227,7 +3367,10 @@ ${textToExplain}
             const response = await askAI(prompt);
 
             if (answer.isConnected) {
-                answer.innerHTML = renderSafeMarkdown(String(response));
+                await displayDocsenseResponse(
+                    answer,
+                    String(response)
+                );
             }
         } catch (error) {
             console.error('[DocSenseAI] Request failed:', error);

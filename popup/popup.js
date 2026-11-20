@@ -200,6 +200,8 @@ activateButton.addEventListener(
                 files: [
 
                     'libs/marked.min.js',
+                    'libs/katex/katex.min.js',
+                    'libs/katex/contrib/auto-render.min.js',
                     'scripts/content.js'
 
                 ]
